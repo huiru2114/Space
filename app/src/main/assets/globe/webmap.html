@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Mapbox Webmap</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: transparent;
+        }
+    
+        /* Style for the canvas shadow */
+        .mapboxgl-canvas {
+            filter: drop-shadow(0px 0px 25px #86CCFF);
+            background-color: transparent !important;
+        }
+    </style>
+    </head>
+<body>
+    <div id="map"></div>
+    <script>
+        mapboxgl.accessToken = "pk.eyJ1IjoiaHVpcnUyMTE0IiwiYSI6ImNtOXdnd2ZobzB2dTkyaW9iMXM0dXp6cHcifQ.HuGABZwV2oHtQOF77Rdu-w";
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/satellite-streets-v12',
+            projection: 'globe',
+            zoom: 0.3,              // lower zoom makes the globe smaller
+            center: [0, 20],        // adjust to focus view
+            pitch: 0,
+            bearing: 0
+        });
+
+        map.on('style.load', () => {
+            // Set the map background layer to transparent
+            if (map.getLayer('background')) {
+                map.setPaintProperty('background', 'background-color', 'rgba(0, 0, 0, 0)');
+            }
+
+            // Optional: Set fog to transparent if globe is visible
+            map.setFog({
+                "color": "rgba(0, 0, 0, 0)", // transparent globe
+                "high-color": "rgba(0, 0, 0, 0)",
+                "space-color": "rgba(0, 0, 0, 0)",
+                "star-intensity": 0.0
+            });
+        });
+    </script>
+</body>
+</html>
