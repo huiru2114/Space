@@ -18,14 +18,14 @@
             width: 100%;
             background-color: transparent;
         }
-    
+
         /* Style for the canvas shadow */
         .mapboxgl-canvas {
             filter: drop-shadow(0px 0px 25px #86CCFF);
             background-color: transparent !important;
         }
     </style>
-    </head>
+</head>
 <body>
     <div id="map"></div>
     <script>
@@ -54,6 +54,29 @@
                 "star-intensity": 0.0
             });
         });
+
+        // Auto-rotation functionality
+        let rotating = true; // Initial state is set to rotating
+        let lastTime = Date.now();
+
+        function rotateMap() {
+            if (rotating) {
+                const now = Date.now();
+                const deltaTime = (now - lastTime) / 1000; // time in seconds
+                let newBearing = map.getBearing() - deltaTime * 5; // rotate from right to left
+                map.setBearing(newBearing);
+                lastTime = now;
+            }
+        }
+
+        // Listen for user interaction to stop rotation
+        map.on('mousedown', () => rotating = false);
+        map.on('touchstart', () => rotating = false);
+        map.on('mouseup', () => rotating = false);
+        map.on('touchend', () => rotating = false);
+
+        // Continuously rotate the map if no interaction
+        setInterval(rotateMap, 50); // Update every 50ms
     </script>
 </body>
 </html>
