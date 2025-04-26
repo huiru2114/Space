@@ -23,7 +23,7 @@ public class ActivityFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_fragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_activity, container, false);
 
         // Initialize RecyclerView
         recyclerView = view.findViewById(R.id.activity_recycler_view);
