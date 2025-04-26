@@ -9,4 +9,6 @@
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#757575</color>
     <color name="divider">#BDBDBD</color>
+    <color name="light_blue">#ADD8E6</color>
+    <color name="light_blue_background">#E6F4F9</color>
 </resources>

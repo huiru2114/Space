@@ -16,7 +16,11 @@
         android:theme="@style/Theme.Space"
         tools:targetApi="31">
         <activity
-            android:name=".HomeActivity"
+            android:name=".AddTripActivity"
+            android:label="Add Trip"
+       />
+        <activity
+            android:name=".HomeFragment"
             android:exported="false" />
         <activity
             android:name=".ProfileFragment"
@@ -36,6 +40,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
     </application>
 
 </manifest>
