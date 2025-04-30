@@ -2,9 +2,13 @@ package com.example.space;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.MenuItem;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -24,6 +28,14 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Apply theme before setting content view
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isDarkMode = sharedPreferences.getBoolean("dark_mode", false);
+        AppCompatDelegate.setDefaultNightMode(
+                isDarkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+        );
+
         setContentView(R.layout.activity_main);
 
         // Initialize Bottom Navigation
@@ -35,6 +47,26 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         activityFragment = new ActivityFragment();
         exploreFragment = new ExploreFragment();
         profileFragment = new ProfileFragment();
+
+        // Check if we're coming back from a theme change
+        String currentFragment = sharedPreferences.getString("current_fragment", null);
+
+        if (currentFragment != null && currentFragment.equals("Settings")) {
+            // Clear the stored fragment preference
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.remove("current_fragment");
+            editor.apply();
+
+            // Load the settings fragment without adding to back stack
+            SettingsFragment settingsFragment = new SettingsFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .replace(R.id.fragment_container, settingsFragment)
+                    .commit();
+
+            return; // Skip the regular fragment loading
+        }
 
         // Restore selected item from saved instance state
         if (savedInstanceState != null) {

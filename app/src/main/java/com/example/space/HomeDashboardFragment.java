@@ -19,6 +19,7 @@ public class HomeDashboardFragment extends Fragment {
     private RecyclerView upcomingTripsRecyclerView;
     private RecyclerView wishlistRecyclerView;
     private MaterialCardView statsCardView;
+    private View newUserView;
 
     @Nullable
     @Override
@@ -31,6 +32,7 @@ public class HomeDashboardFragment extends Fragment {
         upcomingTripsRecyclerView = view.findViewById(R.id.recycler_upcoming_trips);
         wishlistRecyclerView = view.findViewById(R.id.recycler_wishlist);
         statsCardView = view.findViewById(R.id.card_travel_stats);
+        newUserView = view.findViewById(R.id.layout_new_user);
 
         // Setup RecyclerViews
         setupUpcomingTripsRecyclerView();
@@ -43,15 +45,19 @@ public class HomeDashboardFragment extends Fragment {
     }
 
     private void setupUpcomingTripsRecyclerView() {
-        upcomingTripsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        // Set adapter - This would be your custom adapter for upcoming trips
-        // upcomingTripsRecyclerView.setAdapter(new UpcomingTripsAdapter(getUpcomingTrips()));
+        if (upcomingTripsRecyclerView != null) {
+            upcomingTripsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            // Set adapter - This would be your custom adapter for upcoming trips
+            // upcomingTripsRecyclerView.setAdapter(new UpcomingTripsAdapter(getUpcomingTrips()));
+        }
     }
 
     private void setupWishlistRecyclerView() {
-        wishlistRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        // Set adapter - This would be your custom adapter for wishlist items
-        // wishlistRecyclerView.setAdapter(new WishlistAdapter(getWishlistItems()));
+        if (wishlistRecyclerView != null) {
+            wishlistRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+            // Set adapter - This would be your custom adapter for wishlist items
+            // wishlistRecyclerView.setAdapter(new WishlistAdapter(getWishlistItems()));
+        }
     }
 
     private void loadUserStats() {
@@ -59,15 +65,22 @@ public class HomeDashboardFragment extends Fragment {
         int tripCount = 0; // Replace with actual count from your database
         int countriesVisited = 0; // Replace with actual count from your database
 
-        // Update UI
-        tripCountTextView.setText(String.valueOf(tripCount));
-        countriesVisitedTextView.setText(String.valueOf(countriesVisited));
+        // Update UI safely with null checks
+        if (tripCountTextView != null) {
+            tripCountTextView.setText(String.valueOf(tripCount));
+        }
+
+        if (countriesVisitedTextView != null) {
+            countriesVisitedTextView.setText(String.valueOf(countriesVisited));
+        }
 
         // If user is not logged in or has no trips
         if (tripCount == 0) {
-            statsCardView.setVisibility(View.GONE);
+            if (statsCardView != null) {
+                statsCardView.setVisibility(View.GONE);
+            }
+
             // Show alternative content for new users
-            View newUserView = getView().findViewById(R.id.layout_new_user);
             if (newUserView != null) {
                 newUserView.setVisibility(View.VISIBLE);
             }
