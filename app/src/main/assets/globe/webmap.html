@@ -25,14 +25,56 @@
             background-color: transparent !important;
         }
 
-        /* Style for the popup */
+        /* Enhanced Style for the popup */
         .mapboxgl-popup {
-            max-width: 200px;
+            max-width: 240px;
         }
 
         .mapboxgl-popup-content {
             text-align: center;
             font-family: 'Arial', sans-serif;
+            background-color: rgba(10, 20, 30, 0.85);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(134, 204, 255, 0.6);
+        }
+
+        .mapboxgl-popup-close-button {
+            color: #86CCFF;
+            font-size: 20px;
+            top: 8px;
+            right: 8px;
+        }
+
+        .country-name {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+        }
+
+        .action-message {
+            color: #86CCFF;
+            font-size: 14px;
+            margin: 8px 0 0 0;
+        }
+
+        .popup-button {
+            background-color: #86CCFF;
+            color: #0A1E2E;
+            border: none;
+            padding: 8px 16px;
+            margin-top: 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .popup-button:hover {
+            background-color: #a1d6ff;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -52,6 +94,9 @@
             pitch: 0,
             bearing: 0
         });
+
+        // Track active popup
+        let activePopup = null;
 
         map.on('style.load', () => {
             // Set the map background layer to transparent
@@ -119,39 +164,50 @@
                     const feature = e.features[0];
                     const countryName = feature.properties.name_en;
 
-                    // Create a popup to show the country name
-                    new mapboxgl.Popup()
-                        .setLngLat(e.lngLat)
-                        .setHTML(`<p>${countryName}</p><p style="font-size: 12px; color: #86CCFF;">Launching trip planner...</p>`)
-                        .addTo(map);
-
-                    // Debug: Try to show a toast to verify JavaScript interface is working
-                    try {
-                        if (typeof AndroidInterface !== 'undefined' && AndroidInterface.showToast) {
-                            AndroidInterface.showToast("Testing interface with " + countryName);
-                        }
-                    } catch (e) {
-                        console.error("Error testing toast: " + e);
+                    // Close any previously active popup
+                    if (activePopup) {
+                        activePopup.remove();
                     }
 
-                    // Send the country name to Android
-                    try {
-                        console.log("Country selected: " + countryName);
-                        // Add a small delay to ensure the popup is visible before transition
-                        setTimeout(function() {
-                            if (typeof AndroidInterface !== 'undefined') {
-                                AndroidInterface.onCountrySelected(countryName);
-                                console.log("Called AndroidInterface.onCountrySelected");
-                            } else {
-                                console.error("AndroidInterface is not defined");
-                            }
-                        }, 300);
-                    } catch (error) {
-                        console.error("Error calling AndroidInterface: " + error);
-                    }
+                    // Create enhanced popup HTML content
+                    const popupContent = `
+                        <div class="country-name">${countryName}</div>
+                        <div class="action-message">Plan your next adventure</div>
+                        <button class="popup-button" onclick="selectCountry('${countryName}')">Start Planning</button>
+                    `;
+
+                    // Create and add the popup
+                    activePopup = new mapboxgl.Popup({
+                        closeButton: true,
+                        closeOnClick: false
+                    })
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
                 }
             });
         });
+
+        // Function to handle country selection and Android communication
+        function selectCountry(countryName) {
+            console.log("Country selected: " + countryName);
+
+            try {
+                if (typeof AndroidInterface !== 'undefined') {
+                    AndroidInterface.onCountrySelected(countryName);
+                    console.log("Called AndroidInterface.onCountrySelected");
+
+                    // Close the popup after selection
+                    if (activePopup) {
+                        activePopup.remove();
+                    }
+                } else {
+                    console.error("AndroidInterface is not defined");
+                }
+            } catch (error) {
+                console.error("Error calling AndroidInterface: " + error);
+            }
+        }
 
         // Auto-rotation functionality
         let rotating = true; // Initial state is set to rotating

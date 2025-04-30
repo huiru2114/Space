@@ -9,7 +9,6 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebSettings;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -103,14 +102,11 @@ public class HomeFragment extends Fragment {
         @JavascriptInterface
         public void onCountrySelected(final String countryName) {
             if (getActivity() != null) {
-                // Log message to verify the method is being called
-                System.out.println("onCountrySelected called with country: " + countryName);
+                // Log message for debugging purposes
+                System.out.println("onCountrySelected: " + countryName);
 
                 // Must use runOnUiThread for UI operations (including starting activities)
                 getActivity().runOnUiThread(() -> {
-                    // Provide user feedback with a toast
-                    Toast.makeText(getActivity(), "Selected: " + countryName, Toast.LENGTH_SHORT).show();
-
                     // Launch AddTripActivity with the selected country
                     Intent intent = new Intent(getActivity(), AddTripActivity.class);
                     intent.putExtra("selected_country", countryName);
@@ -124,11 +120,8 @@ public class HomeFragment extends Fragment {
         // This method can be called from JavaScript for debugging
         @JavascriptInterface
         public void showToast(final String message) {
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
-                });
-            }
+            // Method kept for compatibility, but toasts are not shown anymore
+            System.out.println("Debug message: " + message);
         }
     }
 }
