@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 public class ProfileFragment extends Fragment {
 
@@ -33,11 +34,13 @@ public class ProfileFragment extends Fragment {
 
         // Set click listeners
         homeButton.setOnClickListener(v -> {
-            // Navigate to home
+            //xy
+            navigateToHomeDashboard();
         });
 
         settingsButton.setOnClickListener(v -> {
-            // Open settings
+            //xy
+            navigateToSettings();
         });
 
         loginButton.setOnClickListener(v -> {
@@ -46,4 +49,45 @@ public class ProfileFragment extends Fragment {
 
         return view;
     }
+
+    //xy
+    /**
+     * Navigate to the Home Dashboard fragment
+     */
+    private void navigateToHomeDashboard() {
+        HomeDashboardFragment homeDashboardFragment = new HomeDashboardFragment();
+        replaceFragment(homeDashboardFragment, "HomeDashboard");
+    }
+//xy
+    /**
+     * Navigate to the Settings fragment
+     */
+    private void navigateToSettings() {
+        SettingsFragment settingsFragment = new SettingsFragment();
+        replaceFragment(settingsFragment, "Settings");
+    }
+
+//xy
+    /**
+     * Helper method to replace the current fragment
+     */
+    private void replaceFragment(Fragment fragment, String tag) {
+        if (getActivity() != null) {
+            FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, fragment, tag);
+            transaction.addToBackStack(tag);
+            transaction.commit();
+        } else {
+            showToast("Error navigating. Please try again.");
+        }
+    }
+//xy
+    /**
+     * Helper method to show toast messages
+     */
+    private void showToast(String message) {
+        android.widget.Toast.makeText(requireContext(), message, android.widget.Toast.LENGTH_SHORT).show();
+    }
+
+
 }
