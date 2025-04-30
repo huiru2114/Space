@@ -79,14 +79,18 @@ public class SettingsFragment extends Fragment {
             // Save preference
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean("dark_mode", isChecked);
+            // Save that we're in settings and want to return here
+            editor.putString("current_fragment", "Settings");
             editor.apply();
 
-            // Apply theme
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
+            // Show toast confirmation
+            String message = isChecked ? "Dark mode enabled" : "Light mode enabled";
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+
+            // Apply theme change with recreation, but we'll return to settings
+            AppCompatDelegate.setDefaultNightMode(
+                    isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
+            );
         });
 
         // Notifications switch
@@ -102,14 +106,22 @@ public class SettingsFragment extends Fragment {
 
         // Privacy settings
         privacyCard.setOnClickListener(v -> {
-            // Navigate to privacy settings
-            Toast.makeText(requireContext(), "Privacy settings", Toast.LENGTH_SHORT).show();
+            // Navigate to privacy settings fragment
+            PrivacySettingsFragment privacyFragment = new PrivacySettingsFragment();
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, privacyFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
 
         // Help center
         helpCard.setOnClickListener(v -> {
-            // Navigate to help center
-            Toast.makeText(requireContext(), "Help center", Toast.LENGTH_SHORT).show();
+            // Navigate to help center fragment
+            HelpCenterFragment helpFragment = new HelpCenterFragment();
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, helpFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
     }
 }

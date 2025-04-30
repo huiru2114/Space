@@ -84,13 +84,13 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_home"
+                    android:src="@drawable/ic_dashboard"
                     android:contentDescription="Home icon" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Home"
+                    android:text="Travel Dashboard"
                     android:textSize="16sp"
                     android:textColor="@android:color/black"
                     android:layout_marginStart="16dp" />
