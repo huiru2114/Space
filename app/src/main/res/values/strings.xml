@@ -1,5 +1,30 @@
 <resources>
     <string name="app_name">Space</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Supabase credentials - Replace with your actual values -->
+    <string name="SUPABASE_URL">https://lqmentgdcdehfywyhwym.supabase.co</string>
+    <string name="SUPABASE_KEY">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxbWVudGdkY2RlaGZ5d3lod3ltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1Njg0NDAsImV4cCI6MjA2MTE0NDQ0MH0.amaTI3Nqq7riu_Nm3PFiyr_WA9FlBWi3UIV7wFAePLc</string>
+
+    <!-- Navigation items -->
+    <string name="nav_home">Home</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_explore">Explore</string>
+    <string name="nav_profile">Profile</string>
+
+
+    <!-- Auth Strings -->
+    <string name="login">Login</string>
+    <string name="signup">Sign Up</string>
+    <string name="logout">Log Out</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="phone">Phone Number</string>
+    <string name="login_successful">Login successful</string>
+    <string name="signup_successful">Account created successfully! Please check your email to verify your account.</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
+    <string name="profile">Profile</string>
 </resources>
