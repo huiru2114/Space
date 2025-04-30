@@ -2,96 +2,86 @@ package com.example.space;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import android.os.Bundle;
-import android.webkit.WebView;
-import android.webkit.WebSettings;
-import android.webkit.WebViewClient;
-import android.widget.ImageView;
 import android.view.MenuItem;
-import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
-    private LottieAnimationView animationBackground;
-    private WebView cesiumWebView;
     private BottomNavigationView bottomNavigationView;
+
+    // Key for saving active fragment state
+    private static final String SELECTED_ITEM = "selected_item";
+    private int selectedItem = R.id.nav_home;
+
+    // Fragments
+    private HomeFragment homeFragment;
+    private ActivityFragment activityFragment;
+    private ExploreFragment exploreFragment;
+    private ProfileFragment profileFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize animation view
-        animationBackground = findViewById(R.id.animation_background);
-        animationBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        animationBackground.setSpeed(1.0f);
-        animationBackground.enableMergePathsForKitKatAndAbove(true);
-        animationBackground.playAnimation();
-
-        // Initialize Cesium WebView
-        cesiumWebView = findViewById(R.id.cesium_webview);
-        setupCesiumWebView();
-
         // Initialize Bottom Navigation
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
-        // Set Home as default selected item
-        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        // Initialize fragments
+        homeFragment = new HomeFragment();
+        activityFragment = new ActivityFragment();
+        exploreFragment = new ExploreFragment();
+        profileFragment = new ProfileFragment();
+
+        // Restore selected item from saved instance state
+        if (savedInstanceState != null) {
+            selectedItem = savedInstanceState.getInt(SELECTED_ITEM, R.id.nav_home);
+        }
+
+        // Set the saved/default selected item
+        bottomNavigationView.setSelectedItemId(selectedItem);
     }
 
-    private void setupCesiumWebView() {
-        WebSettings webSettings = cesiumWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-
-        // Set WebView background transparent to show Lottie animation
-        cesiumWebView.setBackgroundColor(0x00000000);
-        cesiumWebView.setLayerType(WebView.LAYER_TYPE_HARDWARE, null);
-
-        // Load the HTML from assets folder
-        cesiumWebView.setWebViewClient(new WebViewClient());
-        cesiumWebView.loadUrl("file:///android_asset/globe/webmap.html");
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(SELECTED_ITEM, selectedItem);
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
+        selectedItem = itemId;
 
         if (itemId == R.id.nav_home) {
-            // Handle Home tab selection
+            loadFragment(homeFragment);
             return true;
         } else if (itemId == R.id.nav_activity) {
-            // Handle Activity tab selection
+            loadFragment(activityFragment);
             return true;
         } else if (itemId == R.id.nav_explore) {
-            // Handle Explore tab selection
+            loadFragment(exploreFragment);
             return true;
         } else if (itemId == R.id.nav_profile) {
-            // Handle Profile tab selection
+            loadFragment(profileFragment);
             return true;
         }
 
         return false;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (animationBackground != null && !animationBackground.isAnimating()) {
-            animationBackground.resumeAnimation();
+    private boolean loadFragment(Fragment fragment) {
+        if (fragment != null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
+            return true;
         }
-        cesiumWebView.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (animationBackground != null && animationBackground.isAnimating()) {
-            animationBackground.pauseAnimation();
-        }
-        cesiumWebView.onPause();
+        return false;
     }
 }

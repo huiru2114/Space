@@ -6,75 +6,26 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- Lottie Animation View as background -->
-    <com.airbnb.lottie.LottieAnimationView
-        android:id="@+id/animation_background"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:lottie_fileName="background_space.json"
-        app:lottie_autoPlay="true"
-        app:lottie_loop="true" />
-
-    <!-- WebView for Cesium globe -->
-    <WebView
-        android:id="@+id/cesium_webview"
+    <!-- Fragment container for loading different screens -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/header_layout" />
-
-    <!-- Header with Logo and Text -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/header_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- Logo Image -->
-        <ImageView
-            android:id="@+id/logo_image"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/aeroplane"
-            android:contentDescription="Aeroplane Logo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <!-- Title Text -->
-        <TextView
-            android:id="@+id/app_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MEMORY GLOBE"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:layout_marginStart="16dp"
-            app:layout_constraintStart_toEndOf="@id/logo_image"
-            app:layout_constraintTop_toTopOf="@id/logo_image"
-            app:layout_constraintBottom_toBottomOf="@id/logo_image" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
-        android:layout_height="58dp"
-        android:background="@color/bottom_nav_background"
+        android:layout_height="56dp"
+        android:background="@android:color/white"
         app:itemIconTint="@color/bottom_nav_colors"
         app:itemTextColor="@color/bottom_nav_colors"
-        app:itemPaddingTop="2dp"
-        app:itemPaddingBottom="10dp"
+        app:itemPaddingTop="4dp"
+        app:itemPaddingBottom="4dp"
         app:menu="@menu/bottom_navigation_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

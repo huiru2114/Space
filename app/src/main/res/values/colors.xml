@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="bottom_nav_background">#FFFFFFFF</color>
-    <color name="bottom_nav_item_color">#919191</color>
-    <color name="bottom_nav_selected_color">#89CFF0</color>
+    <color name="colorPrimary">#3498DB</color>
+    <color name="colorPrimaryDark">#2980B9</color>
+    <color name="colorAccent">#2196F3</color>
+    <color name="bottom_nav_background">#FFFFFF</color>
+    <color name="activity_card_background">#EEEEEE</color>
+    <color name="fab_background">#3498DB</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="divider">#BDBDBD</color>
+    <color name="light_blue">#ADD8E6</color>
+    <color name="light_blue_background">#E6F4F9</color>
 </resources>
