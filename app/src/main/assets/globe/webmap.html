@@ -24,11 +24,66 @@
             filter: drop-shadow(0px 0px 25px #86CCFF);
             background-color: transparent !important;
         }
+
+        /* Enhanced Style for the popup */
+        .mapboxgl-popup {
+            max-width: 240px;
+        }
+
+        .mapboxgl-popup-content {
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+            background-color: rgba(10, 20, 30, 0.85);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(134, 204, 255, 0.6);
+        }
+
+        .mapboxgl-popup-close-button {
+            color: #86CCFF;
+            font-size: 20px;
+            top: 8px;
+            right: 8px;
+        }
+
+        .country-name {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+        }
+
+        .action-message {
+            color: #86CCFF;
+            font-size: 14px;
+            margin: 8px 0 0 0;
+        }
+
+        .popup-button {
+            background-color: #86CCFF;
+            color: #0A1E2E;
+            border: none;
+            padding: 8px 16px;
+            margin-top: 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .popup-button:hover {
+            background-color: #a1d6ff;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <script>
+<div id="map"></div>
+<script>
+        // Interface for communicating with Android
+        // This will be initialized automatically when the WebView adds the JavaScript interface
+
         mapboxgl.accessToken = "pk.eyJ1IjoiaHVpcnUyMTE0IiwiYSI6ImNtOXdnd2ZobzB2dTkyaW9iMXM0dXp6cHcifQ.HuGABZwV2oHtQOF77Rdu-w";
         const map = new mapboxgl.Map({
             container: 'map',
@@ -39,6 +94,9 @@
             pitch: 0,
             bearing: 0
         });
+
+        // Track active popup
+        let activePopup = null;
 
         map.on('style.load', () => {
             // Set the map background layer to transparent
@@ -53,7 +111,103 @@
                 "space-color": "rgba(0, 0, 0, 0)",
                 "star-intensity": 0.0
             });
+
+            // Add country boundary layer
+            map.addSource('country-boundaries', {
+                type: 'vector',
+                url: 'mapbox://mapbox.country-boundaries-v1'
+            });
+
+            map.addLayer({
+                'id': 'country-boundaries',
+                'type': 'fill',
+                'source': 'country-boundaries',
+                'source-layer': 'country_boundaries',
+                'paint': {
+                    'fill-color': 'rgba(0, 0, 0, 0)',
+                    'fill-outline-color': 'rgba(0, 0, 0, 0)'
+                }
+            });
+
+            // Add hover effect
+            map.addLayer({
+                'id': 'country-boundaries-hover',
+                'type': 'fill',
+                'source': 'country-boundaries',
+                'source-layer': 'country_boundaries',
+                'paint': {
+                    'fill-color': 'rgba(134, 204, 255, 0.3)',
+                    'fill-outline-color': 'rgba(134, 204, 255, 0.8)'
+                },
+                'filter': ['==', 'iso_3166_1', '']
+            });
+
+            // Change cursor when hovering over a country
+            map.on('mousemove', 'country-boundaries', (e) => {
+                if (e.features.length > 0) {
+                    map.getCanvas().style.cursor = 'pointer';
+
+                    const countryCode = e.features[0].properties.iso_3166_1;
+                    map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', countryCode]);
+                }
+            });
+
+            // Reset cursor when not hovering over a country
+            map.on('mouseleave', 'country-boundaries', () => {
+                map.getCanvas().style.cursor = '';
+                map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', '']);
+            });
+
+            // Handle click on a country
+            map.on('click', 'country-boundaries', (e) => {
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    const countryName = feature.properties.name_en;
+
+                    // Close any previously active popup
+                    if (activePopup) {
+                        activePopup.remove();
+                    }
+
+                    // Create enhanced popup HTML content
+                    const popupContent = `
+                        <div class="country-name">${countryName}</div>
+                        <div class="action-message">Plan your next adventure</div>
+                        <button class="popup-button" onclick="selectCountry('${countryName}')">Start Planning</button>
+                    `;
+
+                    // Create and add the popup
+                    activePopup = new mapboxgl.Popup({
+                        closeButton: true,
+                        closeOnClick: false
+                    })
+                    .setLngLat(e.lngLat)
+                    .setHTML(popupContent)
+                    .addTo(map);
+                }
+            });
         });
+
+        // Function to handle country selection and Android communication
+        function selectCountry(countryName) {
+            console.log("Country selected: " + countryName);
+
+            try {
+                if (typeof AndroidInterface !== 'undefined') {
+                    AndroidInterface.onCountrySelected(countryName);
+                    console.log("Called AndroidInterface.onCountrySelected");
+
+                    // Close the popup after selection
+                    if (activePopup) {
+                        activePopup.remove();
+                    }
+                } else {
+                    console.error("AndroidInterface is not defined");
+                }
+            } catch (error) {
+                console.error("Error calling AndroidInterface: " + error);
+            }
+        }
 
         // Auto-rotation functionality
         let rotating = true; // Initial state is set to rotating

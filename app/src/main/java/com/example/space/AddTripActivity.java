@@ -1,6 +1,7 @@
 package com.example.space;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -35,6 +36,7 @@ public class AddTripActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
+        handleIntent();
     }
 
     private void initViews() {
@@ -70,6 +72,24 @@ public class AddTripActivity extends AppCompatActivity {
                 saveTrip();
             }
         });
+    }
+
+    private void handleIntent() {
+        // Check if we have a country name from the globe interaction
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("selected_country")) {
+            String selectedCountry = intent.getStringExtra("selected_country");
+            if (selectedCountry != null && !selectedCountry.isEmpty()) {
+                countryInput.setText(selectedCountry);
+
+                // Optionally, we can also suggest a trip name based on the country
+                String suggestedTripName = "Trip to " + selectedCountry;
+                tripNameInput.setText(suggestedTripName);
+
+                // Show feedback to the user
+                Toast.makeText(this, "Planning a trip to " + selectedCountry, Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void showDatePicker(final EditText dateField) {
