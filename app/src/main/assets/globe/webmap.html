@@ -24,11 +24,24 @@
             filter: drop-shadow(0px 0px 25px #86CCFF);
             background-color: transparent !important;
         }
+
+        /* Style for the popup */
+        .mapboxgl-popup {
+            max-width: 200px;
+        }
+
+        .mapboxgl-popup-content {
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+        }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    <script>
+<div id="map"></div>
+<script>
+        // Interface for communicating with Android
+        // This will be initialized automatically when the WebView adds the JavaScript interface
+
         mapboxgl.accessToken = "pk.eyJ1IjoiaHVpcnUyMTE0IiwiYSI6ImNtOXdnd2ZobzB2dTkyaW9iMXM0dXp6cHcifQ.HuGABZwV2oHtQOF77Rdu-w";
         const map = new mapboxgl.Map({
             container: 'map',
@@ -52,6 +65,91 @@
                 "high-color": "rgba(0, 0, 0, 0)",
                 "space-color": "rgba(0, 0, 0, 0)",
                 "star-intensity": 0.0
+            });
+
+            // Add country boundary layer
+            map.addSource('country-boundaries', {
+                type: 'vector',
+                url: 'mapbox://mapbox.country-boundaries-v1'
+            });
+
+            map.addLayer({
+                'id': 'country-boundaries',
+                'type': 'fill',
+                'source': 'country-boundaries',
+                'source-layer': 'country_boundaries',
+                'paint': {
+                    'fill-color': 'rgba(0, 0, 0, 0)',
+                    'fill-outline-color': 'rgba(0, 0, 0, 0)'
+                }
+            });
+
+            // Add hover effect
+            map.addLayer({
+                'id': 'country-boundaries-hover',
+                'type': 'fill',
+                'source': 'country-boundaries',
+                'source-layer': 'country_boundaries',
+                'paint': {
+                    'fill-color': 'rgba(134, 204, 255, 0.3)',
+                    'fill-outline-color': 'rgba(134, 204, 255, 0.8)'
+                },
+                'filter': ['==', 'iso_3166_1', '']
+            });
+
+            // Change cursor when hovering over a country
+            map.on('mousemove', 'country-boundaries', (e) => {
+                if (e.features.length > 0) {
+                    map.getCanvas().style.cursor = 'pointer';
+
+                    const countryCode = e.features[0].properties.iso_3166_1;
+                    map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', countryCode]);
+                }
+            });
+
+            // Reset cursor when not hovering over a country
+            map.on('mouseleave', 'country-boundaries', () => {
+                map.getCanvas().style.cursor = '';
+                map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', '']);
+            });
+
+            // Handle click on a country
+            map.on('click', 'country-boundaries', (e) => {
+                if (e.features.length > 0) {
+                    const feature = e.features[0];
+                    const countryName = feature.properties.name_en;
+
+                    // Create a popup to show the country name
+                    new mapboxgl.Popup()
+                        .setLngLat(e.lngLat)
+                        .setHTML(`<p>${countryName}</p><p style="font-size: 12px; color: #86CCFF;">Launching trip planner...</p>`)
+                        .addTo(map);
+
+                    // Debug: Try to show a toast to verify JavaScript interface is working
+                    try {
+                        if (typeof AndroidInterface !== 'undefined' && AndroidInterface.showToast) {
+                            AndroidInterface.showToast("Testing interface with " + countryName);
+                        }
+                    } catch (e) {
+                        console.error("Error testing toast: " + e);
+                    }
+
+                    // Send the country name to Android
+                    try {
+                        console.log("Country selected: " + countryName);
+                        // Add a small delay to ensure the popup is visible before transition
+                        setTimeout(function() {
+                            if (typeof AndroidInterface !== 'undefined') {
+                                AndroidInterface.onCountrySelected(countryName);
+                                console.log("Called AndroidInterface.onCountrySelected");
+                            } else {
+                                console.error("AndroidInterface is not defined");
+                            }
+                        }, 300);
+                    } catch (error) {
+                        console.error("Error calling AndroidInterface: " + error);
+                    }
+                }
             });
         });
 
