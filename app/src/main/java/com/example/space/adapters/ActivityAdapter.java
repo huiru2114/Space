@@ -23,7 +23,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.Activi
     @Override
     public ActivityViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_activity, parent, false);
+                .inflate(R.layout.item_explore_countryact, parent, false);
         return new ActivityViewHolder(view);
     }
 
