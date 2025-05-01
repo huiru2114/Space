@@ -22,7 +22,6 @@ public class SupabaseTrip {
     private static final String TAG = "SupabaseTrip";
     private static final String TRIPS_TABLE = "trips";
     private static final String TRIP_IMAGES_BUCKET = "trip-images";
-
     private String SUPABASE_URL;
     private String API_KEY;
     private String REST_URL;
