@@ -3,9 +3,9 @@ package com.example.space;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
@@ -14,6 +14,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -33,6 +34,7 @@ import java.util.Locale;
 public class AddTripActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int PICK_MULTIPLE_IMAGES_REQUEST = 2;
     private static final String TAG = "AddTripActivity";
 
     private EditText startDateInput;
@@ -46,11 +48,18 @@ public class AddTripActivity extends AppCompatActivity {
     private CardView photoArea;
     private LinearLayout uploadedImagesContainer;
     private ProgressBar progressBar;
+    private TextView uploadStatus;
 
     private final Calendar calendar = Calendar.getInstance();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
     private List<String> uploadedImageUrls = new ArrayList<>();
     private SupabaseTrip supabaseTrip;
+    private int totalImagesToUpload = 0;
+    private int imagesUploaded = 0;
+
+    // For editing existing trips
+    private String tripId = null;
+    private boolean isEditMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +71,8 @@ public class AddTripActivity extends AppCompatActivity {
 
         initViews();
         setupListeners();
+
+        // Check if we're editing an existing trip
         handleIntent();
     }
 
@@ -81,6 +92,28 @@ public class AddTripActivity extends AppCompatActivity {
         // Get progress bar from layout
         progressBar = findViewById(R.id.progress_bar);
 
+        // Add upload status text view - if you don't have this in your layout, you'll need to add it
+        uploadStatus = findViewById(R.id.upload_status);
+        if (uploadStatus == null) {
+            // Create a TextView programmatically if it doesn't exist in your layout
+            uploadStatus = new TextView(this);
+            uploadStatus.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            uploadStatus.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            uploadStatus.setVisibility(View.GONE);
+
+            // Find a suitable parent to add this to (e.g., below the images container)
+            // This depends on your actual layout structure
+            View parent = findViewById(R.id.photo_area);
+            if (parent instanceof CardView) {
+                View child = ((CardView) parent).getChildAt(0);
+                if (child instanceof LinearLayout) {
+                    ((LinearLayout) child).addView(uploadStatus);
+                }
+            }
+        }
+
         // Set current date as default
         String today = dateFormat.format(calendar.getTime());
         startDateInput.setText(today);
@@ -94,11 +127,12 @@ public class AddTripActivity extends AppCompatActivity {
         endDateInput.setOnClickListener(v -> showDatePicker(endDateInput));
 
         addPhotosButton.setOnClickListener(v -> {
-            // Open gallery to select photos
+            // Open gallery to select multiple photos
             Intent intent = new Intent();
             intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+            startActivityForResult(Intent.createChooser(intent, "Select Pictures"), PICK_MULTIPLE_IMAGES_REQUEST);
         });
 
         addTripButton.setOnClickListener(v -> {
@@ -111,18 +145,79 @@ public class AddTripActivity extends AppCompatActivity {
 
     private void handleIntent() {
         // Check if we have a country name from the globe interaction
+        // OR if we're editing an existing trip
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("selected_country")) {
-            String selectedCountry = intent.getStringExtra("selected_country");
-            if (selectedCountry != null && !selectedCountry.isEmpty()) {
-                countryInput.setText(selectedCountry);
+        if (intent != null) {
+            if (intent.hasExtra("trip_id")) {
+                // We're editing an existing trip
+                tripId = intent.getStringExtra("trip_id");
+                String tripName = intent.getStringExtra("trip_name");
+                String country = intent.getStringExtra("country");
+                String journal = intent.getStringExtra("journal");
+                String startDateStr = intent.getStringExtra("start_date");
+                String endDateStr = intent.getStringExtra("end_date");
+                ArrayList<String> imageUrls = intent.getStringArrayListExtra("image_urls");
 
-                // Optionally, we can also suggest a trip name based on the country
-                String suggestedTripName = "Trip to " + selectedCountry;
-                tripNameInput.setText(suggestedTripName);
+                // Set fields with existing data
+                if (tripName != null) tripNameInput.setText(tripName);
+                if (country != null) countryInput.setText(country);
+                if (journal != null) journalInput.setText(journal);
 
-                // Show feedback to the user
-                Toast.makeText(this, "Planning a trip to " + selectedCountry, Toast.LENGTH_SHORT).show();
+                // Set dates if available
+                try {
+                    if (startDateStr != null) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                        Date startDate = sdf.parse(startDateStr);
+                        startDateInput.setText(dateFormat.format(startDate));
+                    }
+
+                    if (endDateStr != null) {
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                        Date endDate = sdf.parse(endDateStr);
+                        endDateInput.setText(dateFormat.format(endDate));
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                // Set image URLs
+                if (imageUrls != null && !imageUrls.isEmpty()) {
+                    uploadedImageUrls.addAll(imageUrls);
+
+                    // Display placeholder thumbnails
+                    for (int i = 0; i < imageUrls.size(); i++) {
+                        ImageView thumbnail = new ImageView(this);
+                        thumbnail.setLayoutParams(new LinearLayout.LayoutParams(200, 200));
+                        thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        thumbnail.setImageResource(R.drawable.ic_calendar);
+                        thumbnail.setPadding(8, 8, 8, 8);
+                        uploadedImagesContainer.addView(thumbnail);
+                    }
+
+                    // Update button text
+                    addPhotosButton.setText("Add More Photos");
+                }
+
+                // Update UI to show we're in edit mode
+                isEditMode = true;
+                addTripButton.setText("Update Trip");
+
+                // Show message
+                Toast.makeText(this, "Editing existing trip", Toast.LENGTH_SHORT).show();
+            }
+            else if (intent.hasExtra("selected_country")) {
+                // Handle country selection from globe (existing code)
+                String selectedCountry = intent.getStringExtra("selected_country");
+                if (selectedCountry != null && !selectedCountry.isEmpty()) {
+                    countryInput.setText(selectedCountry);
+
+                    // Optionally, we can also suggest a trip name based on the country
+                    String suggestedTripName = "Trip to " + selectedCountry;
+                    tripNameInput.setText(suggestedTripName);
+
+                    // Show feedback to the user
+                    Toast.makeText(this, "Planning a trip to " + selectedCountry, Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -161,9 +256,20 @@ public class AddTripActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         addTripButton.setEnabled(false);
 
+        if (uploadStatus != null) {
+            uploadStatus.setVisibility(View.VISIBLE);
+            uploadStatus.setText(isEditMode ? "Updating trip..." : "Saving trip...");
+        }
+
         try {
-            // Create a new Trip object
+            // Create a Trip object
             Trip trip = new Trip();
+
+            // Set trip_id only if in edit mode
+            if (isEditMode && tripId != null) {
+                trip.setTripId(tripId);
+            }
+
             trip.setTripName(tripNameInput.getText().toString().trim());
             trip.setCountry(countryInput.getText().toString().trim());
             trip.setJournal(journalInput.getText().toString().trim());
@@ -187,8 +293,11 @@ public class AddTripActivity extends AppCompatActivity {
                 public void onSuccess(String message) {
                     runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
+                        if (uploadStatus != null) {
+                            uploadStatus.setVisibility(View.GONE);
+                        }
                         addTripButton.setEnabled(true);
-                        Toast.makeText(AddTripActivity.this, "Trip saved successfully!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AddTripActivity.this, message, Toast.LENGTH_SHORT).show();
                         finish();
                     });
                 }
@@ -197,6 +306,9 @@ public class AddTripActivity extends AppCompatActivity {
                 public void onError(String error) {
                     runOnUiThread(() -> {
                         progressBar.setVisibility(View.GONE);
+                        if (uploadStatus != null) {
+                            uploadStatus.setVisibility(View.GONE);
+                        }
                         addTripButton.setEnabled(true);
                         Toast.makeText(AddTripActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
                     });
@@ -205,6 +317,9 @@ public class AddTripActivity extends AppCompatActivity {
 
         } catch (ParseException e) {
             progressBar.setVisibility(View.GONE);
+            if (uploadStatus != null) {
+                uploadStatus.setVisibility(View.GONE);
+            }
             addTripButton.setEnabled(true);
             Toast.makeText(this, "Error parsing dates", Toast.LENGTH_SHORT).show();
         }
@@ -214,48 +329,172 @@ public class AddTripActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
+        if (resultCode == RESULT_OK && data != null) {
+            progressBar.setVisibility(View.VISIBLE);
 
-            try {
-                // Convert Uri to byte array
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
-                byte[] imageData = baos.toByteArray();
-
-                // Show upload progress
-                progressBar.setVisibility(View.VISIBLE);
-
-                // Upload the image to Supabase storage
-                supabaseTrip.uploadTripImage(imageData, new SupabaseTrip.TripCallback() {
-                    @Override
-                    public void onSuccess(String imageUrl) {
-                        runOnUiThread(() -> {
-                            // Add URL to our list
-                            uploadedImageUrls.add(imageUrl);
-
-                            // Display the uploaded image as a thumbnail
-                            addImageThumbnail(bitmap);
-
-                            progressBar.setVisibility(View.GONE);
-                            Toast.makeText(AddTripActivity.this, "Image uploaded successfully", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        runOnUiThread(() -> {
-                            progressBar.setVisibility(View.GONE);
-                            Toast.makeText(AddTripActivity.this, "Error uploading image: " + error, Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                });
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show();
+            // For single image selection (keeping backward compatibility)
+            if (requestCode == PICK_IMAGE_REQUEST && data.getData() != null) {
+                Uri imageUri = data.getData();
+                processImage(imageUri);
             }
+            // For multiple image selection
+            else if (requestCode == PICK_MULTIPLE_IMAGES_REQUEST) {
+                // Case 1: Multiple images selected
+                if (data.getClipData() != null) {
+                    int count = data.getClipData().getItemCount();
+                    totalImagesToUpload = count;
+                    imagesUploaded = 0;
+
+                    if (uploadStatus != null) {
+                        uploadStatus.setVisibility(View.VISIBLE);
+                        uploadStatus.setText("Preparing to upload " + count + " images");
+                    }
+
+                    progressBar.setMax(count);
+                    progressBar.setProgress(0);
+
+                    for (int i = 0; i < count; i++) {
+                        Uri imageUri = data.getClipData().getItemAt(i).getUri();
+                        processImageInBatch(imageUri, count, i+1);
+                    }
+                }
+                // Case 2: Only one image selected through multiple selection intent
+                else if (data.getData() != null) {
+                    Uri imageUri = data.getData();
+                    processImage(imageUri);
+                }
+            }
+        }
+    }
+
+    private void processImage(Uri imageUri) {
+        try {
+            // Convert Uri to byte array
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            byte[] imageData = baos.toByteArray();
+
+            // Upload the image to Supabase storage
+            supabaseTrip.uploadTripImage(imageData, new SupabaseTrip.TripCallback() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    runOnUiThread(() -> {
+                        // Add URL to our list
+                        uploadedImageUrls.add(imageUrl);
+
+                        // Display the uploaded image as a thumbnail
+                        addImageThumbnail(bitmap);
+
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(AddTripActivity.this, "Image uploaded successfully", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(AddTripActivity.this, "Error uploading image: " + error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void processImageInBatch(Uri imageUri, int totalImages, int currentPosition) {
+        try {
+            // Convert Uri to byte array
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+
+            // Display the thumbnail immediately
+            addImageThumbnail(bitmap);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            byte[] imageData = baos.toByteArray();
+
+            if (uploadStatus != null) {
+                uploadStatus.setText("Uploading " + currentPosition + " of " + totalImages);
+            }
+
+            // Upload the image to Supabase storage
+            supabaseTrip.uploadTripImage(imageData, new SupabaseTrip.TripCallback() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    runOnUiThread(() -> {
+                        // Add URL to our list
+                        uploadedImageUrls.add(imageUrl);
+
+                        // Update progress
+                        imagesUploaded++;
+                        progressBar.setProgress(imagesUploaded);
+
+                        if (uploadStatus != null) {
+                            uploadStatus.setText("Uploaded " + imagesUploaded + " of " + totalImages);
+                        }
+
+                        // If all images uploaded
+                        if (imagesUploaded >= totalImages) {
+                            progressBar.setVisibility(View.GONE);
+
+                            if (uploadStatus != null) {
+                                uploadStatus.setText("All images uploaded successfully!");
+                                // Hide status after a delay
+                                new Handler().postDelayed(() -> uploadStatus.setVisibility(View.GONE), 2000);
+                            }
+
+                            Toast.makeText(AddTripActivity.this, totalImages + " images uploaded successfully", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        // Update progress even on error
+                        imagesUploaded++;
+                        progressBar.setProgress(imagesUploaded);
+
+                        if (uploadStatus != null) {
+                            uploadStatus.setText("Error uploading image " + currentPosition);
+                        }
+
+                        if (imagesUploaded >= totalImages) {
+                            progressBar.setVisibility(View.GONE);
+
+                            if (uploadStatus != null) {
+                                // Hide status after a delay
+                                new Handler().postDelayed(() -> uploadStatus.setVisibility(View.GONE), 2000);
+                            }
+                        }
+
+                        Toast.makeText(AddTripActivity.this, "Error uploading image: " + error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            // Update progress even on error
+            imagesUploaded++;
+            progressBar.setProgress(imagesUploaded);
+
+            if (imagesUploaded >= totalImages) {
+                progressBar.setVisibility(View.GONE);
+
+                if (uploadStatus != null) {
+                    uploadStatus.setVisibility(View.GONE);
+                }
+            }
+
+            Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show();
         }
     }
 
