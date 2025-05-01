@@ -1,6 +1,7 @@
 package com.example.space;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,28 +14,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.CountryViewHolder> {
+public class CountryListAdapter extends RecyclerView.Adapter<CountryListAdapter.CountryViewHolder> {
 
-    private List<String> countries = new ArrayList<>();
+    private List<String> countries;
     private Context context;
-    private OnCountryClickListener listener;
 
-    public CountryAdapter(Context context) {
+    public CountryListAdapter(Context context) {
         this.context = context;
-    }
-
-    public interface OnCountryClickListener {
-        void onCountryClick(String country);
-    }
-
-    public void setOnCountryClickListener(OnCountryClickListener listener) {
-        this.listener = listener;
+        this.countries = new ArrayList<>();
     }
 
     @NonNull
     @Override
     public CountryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_country, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_country, parent, false);
         return new CountryViewHolder(view);
     }
 
@@ -43,10 +37,12 @@ public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.CountryV
         String country = countries.get(position);
         holder.countryName.setText(country);
 
+        // Set click listener for the country item
         holder.cardView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onCountryClick(country);
-            }
+            // Navigate to CountryTripsActivity with selected country
+            Intent intent = new Intent(context, CountryTripsActivity.class);
+            intent.putExtra("selected_country", country);
+            context.startActivity(intent);
         });
     }
 
@@ -55,11 +51,18 @@ public class CountryAdapter extends RecyclerView.Adapter<CountryAdapter.CountryV
         return countries.size();
     }
 
+    /**
+     * Update the countries list and refresh the view
+     * @param countries New list of countries
+     */
     public void setCountries(List<String> countries) {
         this.countries = countries;
         notifyDataSetChanged();
     }
 
+    /**
+     * ViewHolder class for country items
+     */
     public static class CountryViewHolder extends RecyclerView.ViewHolder {
         TextView countryName;
         CardView cardView;

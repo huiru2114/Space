@@ -8,6 +8,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.FormBody;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -1032,5 +1037,91 @@ public class SupabaseAuth {
                 ", ProfilePic: " + (profilePic != null ? "exists" : "null"));
 
         return new Object[]{username, phone, profilePic};
+    }
+
+
+    public boolean refreshToken() {
+        String currentEmail = authPrefs.getString("current_user_email", null);
+        if (currentEmail == null) {
+            Log.e(TAG, "No current user email found for token refresh");
+            return false;
+        }
+
+        String userKey = currentEmail.replaceAll("[.@]", "_");
+        String refreshToken = authPrefs.getString("refresh_token_" + userKey, null);
+        if (refreshToken == null) {
+            Log.e(TAG, "No refresh token found for current user");
+            return false;
+        }
+
+        try {
+            // Create JSON payload for token refresh
+            JSONObject payload = new JSONObject();
+            payload.put("refresh_token", refreshToken);
+
+            // Make the API call to refresh token
+            URL url = new URL(AUTH_URL + "/token?grant_type=refresh_token");
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("apikey", API_KEY);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = payload.toString().getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                // Success - Parse the response
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()));
+                String line;
+                StringBuilder response = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                JSONObject responseObj = new JSONObject(response.toString());
+                String newAccessToken = responseObj.optString("access_token", "");
+                String newRefreshToken = responseObj.optString("refresh_token", "");
+
+                if (!newAccessToken.isEmpty()) {
+                    // Store the new tokens
+                    SharedPreferences.Editor editor = authPrefs.edit();
+                    editor.putString("access_token_" + userKey, newAccessToken);
+                    if (!newRefreshToken.isEmpty()) {
+                        editor.putString("refresh_token_" + userKey, newRefreshToken);
+                    }
+                    editor.apply();
+
+                    Log.d(TAG, "Token refreshed successfully");
+                    return true;
+                } else {
+                    Log.e(TAG, "Invalid refresh token response - No access token");
+                    return false;
+                }
+            } else {
+                // Error during token refresh
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getErrorStream()));
+                String line;
+                StringBuilder response = new StringBuilder();
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                JSONObject errorObj = new JSONObject(response.toString());
+                String errorMsg = errorObj.optString("message", "Token refresh failed");
+                Log.e(TAG, "Token refresh error: " + errorMsg);
+                return false;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error during token refresh: " + e.getMessage(), e);
+            return false;
+        }
     }
 }
