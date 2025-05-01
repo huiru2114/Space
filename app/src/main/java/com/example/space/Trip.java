@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Trip {
-    private String id;
+    private String tripId;  // New field for trip_id primary key
     private String userId;
     private String tripName;
     private String country;
@@ -23,8 +23,7 @@ public class Trip {
     }
 
     // Constructor with fields
-    public Trip(String userId, String tripName, String country, String journal,
-                Date startDate, Date endDate) {
+    public Trip(String userId, String tripName, String country, String journal, Date startDate, Date endDate) {
         this.userId = userId;
         this.tripName = tripName;
         this.country = country;
@@ -35,12 +34,12 @@ public class Trip {
     }
 
     // Getters and Setters
-    public String getId() {
-        return id;
+    public String getTripId() {
+        return tripId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setTripId(String tripId) {
+        this.tripId = tripId;
     }
 
     public String getUserId() {
