@@ -1038,4 +1038,96 @@ public class SupabaseAuth {
 
         return new Object[]{username, phone, profilePic};
     }
+
+    /**
+     * Change the user's password
+     * @param currentPassword Current password for verification
+     * @param newPassword New password to set
+     * @param callback Callback to handle the response
+     */
+    public void changePassword(String currentPassword, String newPassword, AuthCallback callback) {
+        executor.execute(() -> {
+            try {
+                // Get the user's email and access token
+                String email = getCurrentUserEmail();
+                String accessToken = getAccessToken();
+
+                if (email == null || accessToken == null) {
+                    callback.onError("Not authenticated");
+                    return;
+                }
+
+                // First, verify the current password by attempting to sign in
+                URL signInUrl = new URL(AUTH_URL + "/token?grant_type=password");
+                HttpsURLConnection signInConn = (HttpsURLConnection) signInUrl.openConnection();
+                signInConn.setRequestMethod("POST");
+                signInConn.setRequestProperty("apikey", API_KEY);
+                signInConn.setRequestProperty("Content-Type", "application/json");
+                signInConn.setDoOutput(true);
+
+                // Create sign-in payload
+                JSONObject signInPayload = new JSONObject();
+                signInPayload.put("email", email);
+                signInPayload.put("password", currentPassword);
+
+                try (OutputStream os = signInConn.getOutputStream()) {
+                    byte[] input = signInPayload.toString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                int signInResponseCode = signInConn.getResponseCode();
+                if (signInResponseCode < 200 || signInResponseCode >= 300) {
+                    // Current password is incorrect
+                    callback.onError("Current password is incorrect");
+                    signInConn.disconnect();
+                    return;
+                }
+                signInConn.disconnect();
+
+                // Current password verified, now update to new password
+                URL updateUrl = new URL(AUTH_URL + "/user");
+                HttpsURLConnection updateConn = (HttpsURLConnection) updateUrl.openConnection();
+                updateConn.setRequestMethod("PUT");
+                updateConn.setRequestProperty("apikey", API_KEY);
+                updateConn.setRequestProperty("Authorization", "Bearer " + accessToken);
+                updateConn.setRequestProperty("Content-Type", "application/json");
+                updateConn.setDoOutput(true);
+
+                // Create update payload
+                JSONObject updatePayload = new JSONObject();
+                updatePayload.put("password", newPassword);
+
+                try (OutputStream os = updateConn.getOutputStream()) {
+                    byte[] input = updatePayload.toString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                int updateResponseCode = updateConn.getResponseCode();
+                if (updateResponseCode >= 200 && updateResponseCode < 300) {
+                    // Password updated successfully
+                    callback.onSuccess("Password changed successfully");
+                } else {
+                    // Error updating password
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(updateConn.getErrorStream()));
+                    String line;
+                    StringBuilder response = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONObject errorObj = new JSONObject(response.toString());
+                    String errorMsg = errorObj.optString("message", "Failed to change password");
+                    callback.onError(errorMsg);
+                }
+
+                updateConn.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error changing password: " + e.getMessage());
+                callback.onError("Network error: " + e.getMessage());
+            }
+        });
+    }
 }
