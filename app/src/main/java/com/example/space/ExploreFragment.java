@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class ExploreFragment extends Fragment {
     private TextView noTripsText;
     private SupabaseExplore supabaseExplore;
     private List<String> allCountries = new ArrayList<>();
+    private SwipeRefreshLayout swipeRefreshLayout; // Added SwipeRefreshLayout
 
     @Nullable
     @Override
@@ -39,6 +41,7 @@ public class ExploreFragment extends Fragment {
         searchDestination = view.findViewById(R.id.search_destination);
         progressBar = view.findViewById(R.id.explore_progress);
         noTripsText = view.findViewById(R.id.no_trips_text);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout); // Initialize SwipeRefreshLayout
 
         // Initialize adapter
         countryAdapter = new CountryListAdapter(getContext());
@@ -53,7 +56,33 @@ public class ExploreFragment extends Fragment {
         // Setup search functionality
         setupSearch();
 
+        // Setup swipe refresh layout
+        setupSwipeRefresh();
+
         return view;
+    }
+
+    /**
+     * Setup swipe-to-refresh functionality
+     */
+    private void setupSwipeRefresh() {
+        // Set refresh colors
+        swipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light
+        );
+
+        // Set refresh listener
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Clear search when refreshing
+            searchDestination.setQuery("", false);
+            searchDestination.clearFocus();
+
+            // Force reload data from Supabase
+            loadUserCountries();
+        });
     }
 
     @Override
@@ -75,17 +104,25 @@ public class ExploreFragment extends Fragment {
      * Load all countries that the user has visited from Supabase
      */
     private void loadUserCountries() {
-        // Show progress bar
-        progressBar.setVisibility(View.VISIBLE);
-        exploreRecyclerView.setVisibility(View.GONE);
-        if (noTripsText != null) noTripsText.setVisibility(View.GONE);
+        // Show progress indicator based on current state
+        if (swipeRefreshLayout.isRefreshing()) {
+            // If already showing swipe refresh indicator, don't show progress bar
+            progressBar.setVisibility(View.GONE);
+        } else {
+            // Otherwise show the progress bar
+            progressBar.setVisibility(View.VISIBLE);
+            exploreRecyclerView.setVisibility(View.GONE);
+            if (noTripsText != null) noTripsText.setVisibility(View.GONE);
+        }
 
         supabaseExplore.getUserCountries(new SupabaseExplore.ExploreCallback() {
             @Override
             public void onSuccess(List<String> countries) {
-                if (getActivity() != null) {
+                if (getActivity() != null && isAdded()) {
                     getActivity().runOnUiThread(() -> {
+                        // Hide all loading indicators
                         progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
 
                         if (countries.isEmpty()) {
                             if (noTripsText != null) {
@@ -99,8 +136,12 @@ public class ExploreFragment extends Fragment {
                         } else {
                             if (noTripsText != null) noTripsText.setVisibility(View.GONE);
                             exploreRecyclerView.setVisibility(View.VISIBLE);
-                            allCountries = countries;
-                            countryAdapter.setCountries(countries);
+
+                            // Standardize country names to avoid duplicates
+                            List<String> standardizedCountries = standardizeCountryNames(countries);
+
+                            allCountries = standardizedCountries;
+                            countryAdapter.setCountries(standardizedCountries);
                         }
                     });
                 }
@@ -108,9 +149,11 @@ public class ExploreFragment extends Fragment {
 
             @Override
             public void onError(String error) {
-                if (getActivity() != null) {
+                if (getActivity() != null && isAdded()) {
                     getActivity().runOnUiThread(() -> {
+                        // Hide all loading indicators
                         progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
                         exploreRecyclerView.setVisibility(View.GONE);
 
                         Toast.makeText(getContext(),
@@ -120,6 +163,34 @@ public class ExploreFragment extends Fragment {
                 }
             }
         });
+    }
+
+    /**
+     * Standardize country names to ensure consistent capitalization
+     * @param countries List of countries from database
+     * @return List of standardized country names
+     */
+    private List<String> standardizeCountryNames(List<String> countries) {
+        List<String> standardized = new ArrayList<>();
+        for (String country : countries) {
+            if (country != null && !country.isEmpty()) {
+                // Capitalize first letter of each word
+                String[] words = country.split("\\s+");
+                StringBuilder result = new StringBuilder();
+
+                for (String word : words) {
+                    if (!word.isEmpty()) {
+                        result.append(Character.toUpperCase(word.charAt(0)))
+                                .append(word.substring(1).toLowerCase())
+                                .append(" ");
+                    }
+                }
+                standardized.add(result.toString().trim());
+            } else {
+                standardized.add(country); // Keep null/empty as is
+            }
+        }
+        return standardized;
     }
 
     /**

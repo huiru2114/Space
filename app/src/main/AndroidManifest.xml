@@ -16,7 +16,6 @@
         android:theme="@style/Theme.Space"
         tools:targetApi="31">
 
-        <!-- Added the missing CountryTripsActivity here -->
         <activity
             android:name=".CountryTripsActivity"
             android:exported="false" />
