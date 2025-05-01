@@ -1,8 +1,8 @@
 package com.example.space;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -30,7 +30,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private SupabaseAuth supabaseAuth;
     private SharedPreferences prefs;
-    private SharedPreferences signupPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +38,7 @@ public class LoginActivity extends AppCompatActivity {
 
         supabaseAuth = new SupabaseAuth(this);
         prefs = getSharedPreferences("AuthPrefs", MODE_PRIVATE);
-        signupPrefs = getSharedPreferences("SignupPrefs", MODE_PRIVATE);
+
 
         // Initialize views
         emailEditText = findViewById(R.id.et_username);
@@ -50,12 +49,6 @@ public class LoginActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back_button);
         passwordVisibilityToggle = findViewById(R.id.password_visibility_toggle);
 
-        // Pre-fill email if available from signup
-        String savedEmail = prefs.getString("userEmail", "");
-        if (!savedEmail.isEmpty()) {
-            emailEditText.setText(savedEmail);
-        }
-
         // Set listeners
         loginButton.setOnClickListener(v -> handleLogin());
         signupTextView.setOnClickListener(v -> navigateToSignup());
@@ -63,25 +56,32 @@ public class LoginActivity extends AppCompatActivity {
         passwordVisibilityToggle.setOnClickListener(v -> togglePasswordVisibility());
     }
 
+
+    // Navigate to login screen after email confirmation
+    private void proceedToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    // Toggle password visibility
     private void togglePasswordVisibility() {
         passwordVisible = !passwordVisible;
 
         if (passwordVisible) {
-            // Show password
             passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
                     android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_on);
         } else {
-            // Hide password
             passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
                     android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
             passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_off);
         }
 
-        // Move cursor to the end of text
         passwordEditText.setSelection(passwordEditText.getText().length());
     }
 
+    // Handle login logic
     private void handleLogin() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -105,11 +105,9 @@ public class LoginActivity extends AppCompatActivity {
             public void onSuccess(String message) {
                 Log.d(TAG, "Login success: " + message);
 
-                // Store the email with user-specific key
                 String userKey = email.replaceAll("[.@]", "_");
                 prefs.edit().putString("userEmail_" + userKey, email).apply();
 
-                // After successful login, check if profile exists
                 String userId = supabaseAuth.getUserId();
                 if (userId != null) {
                     checkUserProfile(userId);
@@ -133,14 +131,12 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    // Check if the user's profile exists and fetch details
     private void checkUserProfile(String userId) {
-        Log.d(TAG, "Checking profile for user: " + userId);
         supabaseAuth.fetchProfile(userId, new SupabaseAuth.ProfileCallback() {
             @Override
             public void onSuccess(String username, String phone, String profilePic) {
-                Log.d(TAG, "Profile exists - Username: " + username + ", Phone: " + phone + ", ProfilePic: " + profilePic);
                 if (username == null || username.isEmpty()) {
-                    // Profile exists but is empty, try to create it again
                     createProfileForUser(userId);
                 } else {
                     runOnUiThread(() -> {
@@ -152,13 +148,11 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onProfileNotFound() {
-                Log.d(TAG, "Profile not found, creating new profile");
                 createProfileForUser(userId);
             }
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "Error checking profile: " + error);
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Error checking profile: " + error, Toast.LENGTH_SHORT).show();
                     finish();
@@ -167,11 +161,10 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    // Create profile for the user if none exists
     private void createProfileForUser(String userId) {
-        Log.d(TAG, "Creating profile for user: " + userId);
         String currentEmail = supabaseAuth.getCurrentUserEmail();
         if (currentEmail == null) {
-            Log.e(TAG, "Current email is null");
             runOnUiThread(() -> {
                 Toast.makeText(this, "Error: User email not found", Toast.LENGTH_SHORT).show();
                 finish();
@@ -179,26 +172,12 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Get pending data from signup
-        Object[] pendingData = supabaseAuth.getPendingProfileData(currentEmail);
-        String username;
-        String phone;
-
-        if (pendingData != null) {
-            username = (String) pendingData[0];
-            phone = (String) pendingData[1];
-            Log.d(TAG, "Using pending data - Username: " + username + ", Phone: " + phone);
-        } else {
-            // Generate username from email
-            username = currentEmail.split("@")[0];
-            phone = "";
-            Log.d(TAG, "No pending data, using generated username: " + username);
-        }
+        String username = currentEmail.split("@")[0];
+        String phone = "";
 
         supabaseAuth.createProfile(userId, username, phone, new SupabaseAuth.AuthCallback() {
             @Override
             public void onSuccess(String message) {
-                Log.d(TAG, "Profile created successfully: " + message);
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Profile created successfully!", Toast.LENGTH_SHORT).show();
                     finish();
@@ -207,7 +186,6 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "Error creating profile: " + error);
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Error creating profile: " + error, Toast.LENGTH_SHORT).show();
                     finish();
@@ -216,13 +194,13 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    // We don't need onActivityResult anymore since we create the profile automatically
-
+    // Navigate to Signup activity
     private void navigateToSignup() {
         Intent intent = new Intent(this, SignupActivity.class);
         startActivity(intent);
     }
 
+    // Show or hide loading indicator
     private void showLoading(boolean isLoading) {
         if (isLoading) {
             progressBar.setVisibility(View.VISIBLE);
