@@ -228,7 +228,6 @@ public class SupabaseExplore {
                         JSONObject tripObj = jsonArray.getJSONObject(i);
 
                         Trip trip = new Trip();
-                        trip.setId(tripObj.getString("id"));
                         trip.setUserId(tripObj.getString("user_id"));
                         trip.setTripName(tripObj.getString("trip_name"));
                         trip.setCountry(tripObj.getString("country"));

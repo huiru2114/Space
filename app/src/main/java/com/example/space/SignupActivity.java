@@ -19,7 +19,9 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
+import com.google.android.material.textfield.TextInputLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import android.util.Base64;
@@ -31,7 +33,7 @@ public class SignupActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
 
     private ImageView profilePicture;
-    private Button selectPictureButton;
+    private CardView selectPictureButton;
     private EditText usernameEditText;
     private EditText phoneEditText;
     private EditText emailEditText;
@@ -41,11 +43,9 @@ public class SignupActivity extends AppCompatActivity {
     private TextView loginTextView;
     private ProgressBar progressBar;
     private ImageView backButton;
-    private ImageView passwordVisibilityToggle;
-    private ImageView confirmPasswordVisibilityToggle;
+    private TextInputLayout passwordLayout;
+    private TextInputLayout confirmPasswordLayout;
 
-    private boolean passwordVisible = false;
-    private boolean confirmPasswordVisible = false;
     private Uri selectedImageUri = null;
     private String encodedImage = null;
 
@@ -74,41 +74,17 @@ public class SignupActivity extends AppCompatActivity {
         loginTextView = findViewById(R.id.tv_login);
         progressBar = findViewById(R.id.progress_bar);
         backButton = findViewById(R.id.back_button);
-        passwordVisibilityToggle = findViewById(R.id.password_visibility_toggle);
-        confirmPasswordVisibilityToggle = findViewById(R.id.confirm_password_visibility_toggle);
+        passwordLayout = findViewById(R.id.password_layout);
+        confirmPasswordLayout = findViewById(R.id.confirm_password_layout);
 
         // Set listeners
         selectPictureButton.setOnClickListener(v -> openImagePicker());
         signupButton.setOnClickListener(v -> handleSignup());
         loginTextView.setOnClickListener(v -> finish()); // Go back to login
         backButton.setOnClickListener(v -> finish());
-        passwordVisibilityToggle.setOnClickListener(v -> togglePasswordVisibility(passwordEditText, passwordVisibilityToggle, true));
-        confirmPasswordVisibilityToggle.setOnClickListener(v -> togglePasswordVisibility(confirmPasswordEditText, confirmPasswordVisibilityToggle, false));
-    }
 
-    private void togglePasswordVisibility(EditText editText, ImageView toggleIcon, boolean isPassword) {
-        if (isPassword) {
-            passwordVisible = !passwordVisible;
-            if (passwordVisible) {
-                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                toggleIcon.setImageResource(R.drawable.ic_visibility_on);
-            } else {
-                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                toggleIcon.setImageResource(R.drawable.ic_visibility_off);
-            }
-        } else {
-            confirmPasswordVisible = !confirmPasswordVisible;
-            if (confirmPasswordVisible) {
-                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-                toggleIcon.setImageResource(R.drawable.ic_visibility_on);
-            } else {
-                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                toggleIcon.setImageResource(R.drawable.ic_visibility_off);
-            }
-        }
-
-        // Move cursor to the end of text
-        editText.setSelection(editText.getText().length());
+        // Material TextInputLayout handles password visibility toggle automatically
+        // No need for custom visibility toggle logic
     }
 
     private void openImagePicker() {

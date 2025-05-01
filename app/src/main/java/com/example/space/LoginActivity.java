@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -25,7 +26,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextView signupTextView;
     private ProgressBar progressBar;
     private ImageView backButton;
-    private ImageView passwordVisibilityToggle;
     private boolean passwordVisible = false;
 
     private SupabaseAuth supabaseAuth;
@@ -39,7 +39,6 @@ public class LoginActivity extends AppCompatActivity {
         supabaseAuth = new SupabaseAuth(this);
         prefs = getSharedPreferences("AuthPrefs", MODE_PRIVATE);
 
-
         // Initialize views
         emailEditText = findViewById(R.id.et_username);
         passwordEditText = findViewById(R.id.et_password);
@@ -47,38 +46,21 @@ public class LoginActivity extends AppCompatActivity {
         signupTextView = findViewById(R.id.tv_signup);
         progressBar = findViewById(R.id.progress_bar);
         backButton = findViewById(R.id.back_button);
-        passwordVisibilityToggle = findViewById(R.id.password_visibility_toggle);
+
+        // Set up password visibility toggle with TextInputLayout
+        TextInputLayout passwordLayout = findViewById(R.id.password_layout);
 
         // Set listeners
         loginButton.setOnClickListener(v -> handleLogin());
         signupTextView.setOnClickListener(v -> navigateToSignup());
         backButton.setOnClickListener(v -> finish());
-        passwordVisibilityToggle.setOnClickListener(v -> togglePasswordVisibility());
     }
-
 
     // Navigate to login screen after email confirmation
     private void proceedToLogin() {
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
-    }
-
-    // Toggle password visibility
-    private void togglePasswordVisibility() {
-        passwordVisible = !passwordVisible;
-
-        if (passwordVisible) {
-            passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
-                    android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-            passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_on);
-        } else {
-            passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
-                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-            passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_off);
-        }
-
-        passwordEditText.setSelection(passwordEditText.getText().length());
     }
 
     // Handle login logic
