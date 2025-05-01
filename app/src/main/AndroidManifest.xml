@@ -20,10 +20,19 @@
             android:exported="false" />
         <activity
             android:name=".LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login"
-            android:theme="@style/Theme.Space" />
-        <activity
+            android:exported="true"
+        android:label="@string/login"
+        android:theme="@style/Theme.Space">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="space" android:host="confirmation" />
+        </intent-filter>
+    </activity>
+
+
+    <activity
             android:name=".AddTripActivity"
             android:label="Add Trip" />
         <activity

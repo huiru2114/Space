@@ -69,9 +69,12 @@ public class SettingsFragment extends Fragment {
 
     private void setupClickListeners() {
         accountCard.setOnClickListener(v -> {
-            // Navigate to account management
-            // For now, just show a toast since login functionality is handled elsewhere
-            Toast.makeText(requireContext(), "Account management", Toast.LENGTH_SHORT).show();
+            // Navigate to account settings fragment
+            AccountSettingsFragment accountFragment = new AccountSettingsFragment();
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, accountFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
 
         // Dark mode switch

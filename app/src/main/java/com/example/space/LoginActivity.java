@@ -1,12 +1,10 @@
-// LoginActivity.java
 package com.example.space;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,118 +18,168 @@ import androidx.appcompat.app.AppCompatActivity;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
-    private EditText etUsername;
-    private EditText etPassword;
-    private Button btnLogin;
-    private TextView tvSignUp;
+
+    private EditText emailEditText;
+    private EditText passwordEditText;
+    private Button loginButton;
+    private TextView signupTextView;
     private ProgressBar progressBar;
-    private ImageView passwordVisibilityToggle;
     private ImageView backButton;
+    private ImageView passwordVisibilityToggle;
     private boolean passwordVisible = false;
+
     private SupabaseAuth supabaseAuth;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Supabase auth
         supabaseAuth = new SupabaseAuth(this);
+        prefs = getSharedPreferences("AuthPrefs", MODE_PRIVATE);
+
 
         // Initialize views
-        etUsername = findViewById(R.id.et_username);
-        etPassword = findViewById(R.id.et_password);
-        btnLogin = findViewById(R.id.btn_login);
-        tvSignUp = findViewById(R.id.tv_signup);
+        emailEditText = findViewById(R.id.et_username);
+        passwordEditText = findViewById(R.id.et_password);
+        loginButton = findViewById(R.id.btn_login);
+        signupTextView = findViewById(R.id.tv_signup);
         progressBar = findViewById(R.id.progress_bar);
-        passwordVisibilityToggle = findViewById(R.id.password_visibility_toggle);
         backButton = findViewById(R.id.back_button);
+        passwordVisibilityToggle = findViewById(R.id.password_visibility_toggle);
 
-        // Set up back button
+        // Set listeners
+        loginButton.setOnClickListener(v -> handleLogin());
+        signupTextView.setOnClickListener(v -> navigateToSignup());
         backButton.setOnClickListener(v -> finish());
-
-        // Set up password visibility toggle
         passwordVisibilityToggle.setOnClickListener(v -> togglePasswordVisibility());
-
-        // Set up login button
-        btnLogin.setOnClickListener(v -> {
-            if (validateInputs()) {
-                performLogin();
-            }
-        });
-
-        // Set up sign up text
-        tvSignUp.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-            startActivity(intent);
-        });
     }
 
+
+    // Navigate to login screen after email confirmation
+    private void proceedToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    // Toggle password visibility
     private void togglePasswordVisibility() {
         passwordVisible = !passwordVisible;
+
         if (passwordVisible) {
-            // Show password
-            etPassword.setTransformationMethod(null);
+            passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
+                    android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_on);
         } else {
-            // Hide password
-            etPassword.setTransformationMethod(new PasswordTransformationMethod());
+            passwordEditText.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
             passwordVisibilityToggle.setImageResource(R.drawable.ic_visibility_off);
         }
-        // Move cursor to the end of the text
-        etPassword.setSelection(etPassword.getText().length());
+
+        passwordEditText.setSelection(passwordEditText.getText().length());
     }
 
-    private boolean validateInputs() {
-        String email = etUsername.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+    // Handle login logic
+    private void handleLogin() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
 
-        // Validate email
-        if (TextUtils.isEmpty(email)) {
-            etUsername.setError("Email is required");
-            etUsername.requestFocus();
-            return false;
+        if (email.isEmpty()) {
+            emailEditText.setError("Email is required");
+            emailEditText.requestFocus();
+            return;
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etUsername.setError("Please enter a valid email");
-            etUsername.requestFocus();
-            return false;
+        if (password.isEmpty()) {
+            passwordEditText.setError("Password is required");
+            passwordEditText.requestFocus();
+            return;
         }
 
-        // Validate password
-        if (TextUtils.isEmpty(password)) {
-            etPassword.setError("Password is required");
-            etPassword.requestFocus();
-            return false;
-        }
-
-        if (password.length() < 6) {
-            etPassword.setError("Password must be at least 6 characters");
-            etPassword.requestFocus();
-            return false;
-        }
-
-        return true;
-    }
-
-    private void performLogin() {
-        // Show progress
-        progressBar.setVisibility(View.VISIBLE);
-        btnLogin.setEnabled(false);
-
-        String email = etUsername.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        showLoading(true);
 
         supabaseAuth.signIn(email, password, new SupabaseAuth.AuthCallback() {
             @Override
             public void onSuccess(String message) {
-                runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnLogin.setEnabled(true);
-                    Toast.makeText(LoginActivity.this, message, Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Login success: " + message);
 
-                    // Navigate back to the calling activity
+                String userKey = email.replaceAll("[.@]", "_");
+                prefs.edit().putString("userEmail_" + userKey, email).apply();
+
+                String userId = supabaseAuth.getUserId();
+                if (userId != null) {
+                    checkUserProfile(userId);
+                } else {
+                    runOnUiThread(() -> {
+                        showLoading(false);
+                        Toast.makeText(LoginActivity.this, "Login successful but user ID is missing", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Login error: " + error);
+                runOnUiThread(() -> {
+                    showLoading(false);
+                    Toast.makeText(LoginActivity.this, error, Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    // Check if the user's profile exists and fetch details
+    private void checkUserProfile(String userId) {
+        supabaseAuth.fetchProfile(userId, new SupabaseAuth.ProfileCallback() {
+            @Override
+            public void onSuccess(String username, String phone, String profilePic) {
+                if (username == null || username.isEmpty()) {
+                    createProfileForUser(userId);
+                } else {
+                    runOnUiThread(() -> {
+                        Toast.makeText(LoginActivity.this, "Welcome back, " + username + "!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
+                }
+            }
+
+            @Override
+            public void onProfileNotFound() {
+                createProfileForUser(userId);
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    Toast.makeText(LoginActivity.this, "Error checking profile: " + error, Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+            }
+        });
+    }
+
+    // Create profile for the user if none exists
+    private void createProfileForUser(String userId) {
+        String currentEmail = supabaseAuth.getCurrentUserEmail();
+        if (currentEmail == null) {
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Error: User email not found", Toast.LENGTH_SHORT).show();
+                finish();
+            });
+            return;
+        }
+
+        String username = currentEmail.split("@")[0];
+        String phone = "";
+
+        supabaseAuth.createProfile(userId, username, phone, new SupabaseAuth.AuthCallback() {
+            @Override
+            public void onSuccess(String message) {
+                runOnUiThread(() -> {
+                    Toast.makeText(LoginActivity.this, "Profile created successfully!", Toast.LENGTH_SHORT).show();
                     finish();
                 });
             }
@@ -139,11 +187,27 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    btnLogin.setEnabled(true);
-                    Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, "Error creating profile: " + error, Toast.LENGTH_SHORT).show();
+                    finish();
                 });
             }
         });
+    }
+
+    // Navigate to Signup activity
+    private void navigateToSignup() {
+        Intent intent = new Intent(this, SignupActivity.class);
+        startActivity(intent);
+    }
+
+    // Show or hide loading indicator
+    private void showLoading(boolean isLoading) {
+        if (isLoading) {
+            progressBar.setVisibility(View.VISIBLE);
+            loginButton.setEnabled(false);
+        } else {
+            progressBar.setVisibility(View.GONE);
+            loginButton.setEnabled(true);
+        }
     }
 }

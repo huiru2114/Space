@@ -12,7 +12,10 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,6 +51,14 @@ public class SupabaseTrip {
     }
 
     /**
+     * Interface for retrieving trip data
+     */
+    public interface TripDataCallback {
+        void onSuccess(List<Trip> trips);
+        void onError(String error);
+    }
+
+    /**
      * Save a trip to Supabase
      * @param trip Trip object to save
      * @param callback Callback to handle the response
@@ -76,6 +87,12 @@ public class SupabaseTrip {
 
                 // Create JSON payload for creating trip
                 JSONObject payload = new JSONObject();
+
+                // Only set trip_id for updates, not for new trips (let the database generate it)
+                if (trip.getTripId() != null && !trip.getTripId().isEmpty()) {
+                    payload.put("trip_id", trip.getTripId());
+                }
+
                 payload.put("user_id", trip.getUserId());
                 payload.put("trip_name", trip.getTripName());
                 payload.put("country", trip.getCountry());
@@ -92,10 +109,20 @@ public class SupabaseTrip {
 
                 Log.d(TAG, "Sending trip creation request with payload: " + payload.toString());
 
-                // Make the API call to create trip
-                URL url = new URL(REST_URL + "/" + TRIPS_TABLE);
+                // Determine if this is an update or create
+                boolean isUpdate = trip.getTripId() != null && !trip.getTripId().isEmpty();
+                String endpoint = REST_URL + "/" + TRIPS_TABLE;
+                String method = isUpdate ? "PATCH" : "POST";
+
+                // If updating, add query parameter to specify which trip to update
+                if (isUpdate) {
+                    endpoint += "?trip_id=eq." + trip.getTripId();
+                }
+
+                // Make the API call to create/update trip
+                URL url = new URL(endpoint);
                 HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
+                connection.setRequestMethod(method);
                 connection.setRequestProperty("apikey", API_KEY);
                 connection.setRequestProperty("Authorization", "Bearer " + accessToken);
                 connection.setRequestProperty("Content-Type", "application/json");
@@ -108,7 +135,7 @@ public class SupabaseTrip {
                 }
 
                 int responseCode = connection.getResponseCode();
-                Log.d(TAG, "Trip creation response code: " + responseCode);
+                Log.d(TAG, "Trip operation response code: " + responseCode);
 
                 if (responseCode >= 200 && responseCode < 300) {
                     // Success - Parse the response
@@ -122,10 +149,28 @@ public class SupabaseTrip {
                     reader.close();
 
                     String responseStr = response.toString();
-                    Log.d(TAG, "Trip creation response: " + responseStr);
-                    callback.onSuccess("Trip created successfully");
+                    Log.d(TAG, "Trip operation response: " + responseStr);
+
+                    // Get the trip_id from the response for new trips
+                    if (!isUpdate && responseStr != null && !responseStr.isEmpty() && !responseStr.equals("[]")) {
+                        try {
+                            JSONArray responseArray = new JSONArray(responseStr);
+                            if (responseArray.length() > 0) {
+                                JSONObject tripObj = responseArray.getJSONObject(0);
+                                String tripId = tripObj.optString("trip_id", "");
+                                if (!tripId.isEmpty()) {
+                                    trip.setTripId(tripId);
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing trip_id from response: " + e.getMessage());
+                        }
+                    }
+
+                    String successMessage = isUpdate ? "Trip updated successfully" : "Trip created successfully";
+                    callback.onSuccess(successMessage);
                 } else {
-                    // Error creating trip
+                    // Error creating/updating trip
                     BufferedReader reader = new BufferedReader(
                             new InputStreamReader(connection.getErrorStream()));
                     String line;
@@ -136,17 +181,146 @@ public class SupabaseTrip {
                     reader.close();
 
                     String errorResponse = response.toString();
-                    Log.e(TAG, "Trip creation error response: " + errorResponse);
-                    callback.onError("Failed to create trip: " + errorResponse);
+                    Log.e(TAG, "Trip operation error response: " + errorResponse);
+
+                    // Special handling for common errors
+                    if (errorResponse.contains("violates foreign key constraint")) {
+                        callback.onError("Cannot create trip: Your user profile hasn't been created. Please set up your profile first.");
+                    } else {
+                        callback.onError("Failed to " + (isUpdate ? "update" : "create") + " trip: " + errorResponse);
+                    }
                 }
 
                 connection.disconnect();
 
             } catch (Exception e) {
-                Log.e(TAG, "Error creating trip: " + e.getMessage(), e);
+                Log.e(TAG, "Error creating/updating trip: " + e.getMessage(), e);
                 callback.onError("Network error: " + e.getMessage());
             }
         });
+    }
+
+    /**
+     * Get trips for the current user
+     * @param callback Callback to handle the response
+     */
+    public void getUserTrips(TripDataCallback callback) {
+        executor.execute(() -> {
+            try {
+                String accessToken = auth.getAccessToken();
+                if (accessToken == null) {
+                    callback.onError("Not authenticated. Please log in.");
+                    return;
+                }
+
+                String userId = auth.getUserId();
+                if (userId == null) {
+                    callback.onError("User ID not found. Please log in.");
+                    return;
+                }
+
+                // Make the API call to get trips
+                URL url = new URL(REST_URL + "/" + TRIPS_TABLE + "?user_id=eq." + userId + "&order=start_date.desc");
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("apikey", API_KEY);
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                connection.setRequestProperty("Content-Type", "application/json");
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode >= 200 && responseCode < 300) {
+                    // Success - Parse the response
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(connection.getInputStream()));
+                    String line;
+                    StringBuilder response = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    String responseStr = response.toString();
+                    Log.d(TAG, "Get trips response: " + responseStr);
+
+                    // Parse trips
+                    List<Trip> trips = parseTripsFromResponse(responseStr);
+                    callback.onSuccess(trips);
+                } else {
+                    // Error getting trips
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(connection.getErrorStream()));
+                    String line;
+                    StringBuilder response = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    String errorResponse = response.toString();
+                    Log.e(TAG, "Get trips error: " + errorResponse);
+                    callback.onError("Failed to get trips: " + errorResponse);
+                }
+
+                connection.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting trips: " + e.getMessage(), e);
+                callback.onError("Network error: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Parse trips from JSON response
+     */
+    private List<Trip> parseTripsFromResponse(String jsonResponse) {
+        List<Trip> trips = new ArrayList<>();
+        try {
+            JSONArray tripsArray = new JSONArray(jsonResponse);
+
+            for (int i = 0; i < tripsArray.length(); i++) {
+                JSONObject tripObj = tripsArray.getJSONObject(i);
+
+                Trip trip = new Trip();
+                trip.setTripId(tripObj.optString("trip_id", ""));
+                trip.setUserId(tripObj.optString("user_id", ""));
+                trip.setTripName(tripObj.optString("trip_name", ""));
+                trip.setCountry(tripObj.optString("country", ""));
+                trip.setJournal(tripObj.optString("journal", ""));
+
+                // Parse dates
+                SimpleDateFormat sqlDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                String startDateStr = tripObj.optString("start_date", "");
+                String endDateStr = tripObj.optString("end_date", "");
+
+                try {
+                    if (!startDateStr.isEmpty()) {
+                        trip.setStartDate(sqlDateFormat.parse(startDateStr));
+                    }
+                    if (!endDateStr.isEmpty()) {
+                        trip.setEndDate(sqlDateFormat.parse(endDateStr));
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing dates: " + e.getMessage());
+                }
+
+                // Parse image URLs
+                JSONArray imageUrlsArray = tripObj.optJSONArray("image_url");
+                if (imageUrlsArray != null) {
+                    for (int j = 0; j < imageUrlsArray.length(); j++) {
+                        String imageUrl = imageUrlsArray.optString(j, "");
+                        if (!imageUrl.isEmpty()) {
+                            trip.addImageUrl(imageUrl);
+                        }
+                    }
+                }
+
+                trips.add(trip);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing trips: " + e.getMessage(), e);
+        }
+        return trips;
     }
 
     /**
@@ -165,9 +339,6 @@ public class SupabaseTrip {
 
                 // Generate a unique filename
                 String filename = "trip_" + System.currentTimeMillis() + ".jpg";
-
-                // Create bucket if it doesn't exist (similar to profile picture upload in SupabaseAuth)
-                // Note: Your team may have already created this bucket
 
                 // Upload the image to storage
                 URL uploadUrl = new URL(STORAGE_URL + "/object/" + TRIP_IMAGES_BUCKET + "/" + filename);

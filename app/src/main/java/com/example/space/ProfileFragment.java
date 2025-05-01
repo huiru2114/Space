@@ -30,7 +30,6 @@ import com.bumptech.glide.load.model.LazyHeaders;
 
 import static android.content.Context.MODE_PRIVATE;
 
-
 public class ProfileFragment extends Fragment {
 
     private static final String TAG = "ProfileFragment";
@@ -45,10 +44,16 @@ public class ProfileFragment extends Fragment {
     private SupabaseAuth supabaseAuth;
     private SharedPreferences prefs;
 
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
+
+        // Initialize SupabaseAuth
+        supabaseAuth = new SupabaseAuth(requireContext());
+
 
         // Initialize views
         usernameTextView = view.findViewById(R.id.username_text);
@@ -58,11 +63,9 @@ public class ProfileFragment extends Fragment {
         loginButton = view.findViewById(R.id.btn_login);
         loadingIndicator = view.findViewById(R.id.loading_indicator);
 
-        // Initialize SharedPreferences
-        prefs = requireActivity().getSharedPreferences("AuthPrefs", MODE_PRIVATE);
+        prefs = getActivity().getSharedPreferences("AuthPrefs", MODE_PRIVATE);
 
-        // Initialize SupabaseAuth
-        supabaseAuth = new SupabaseAuth(requireContext());
+
 
         // Initialize UI with default state
         displayAnonymousState();
@@ -143,8 +146,7 @@ public class ProfileFragment extends Fragment {
         super.onResume();
         Log.d(TAG, "onResume: Checking login state");
         if (getActivity() != null) {
-            // Reload preferences and check login state
-            prefs = getActivity().getSharedPreferences("AuthPrefs", MODE_PRIVATE);
+
             validateSession();
         }
     }
@@ -386,6 +388,5 @@ public class ProfileFragment extends Fragment {
             });
         }
     }
-
-
 }
+
