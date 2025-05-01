@@ -16,9 +16,16 @@
         android:theme="@style/Theme.Space"
         tools:targetApi="31">
         <activity
+            android:name=".SignupActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.Space" />
+        <activity
             android:name=".AddTripActivity"
-            android:label="Add Trip"
-       />
+            android:label="Add Trip" />
         <activity
             android:name=".HomeFragment"
             android:exported="false" />
@@ -33,14 +40,15 @@
             android:exported="false" />
         <activity
             android:name=".SplashActivity"
-            android:theme="@style/Theme.App.Starting"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
-    <activity
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
     </application>
