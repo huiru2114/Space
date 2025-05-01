@@ -11,11 +11,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.space.ActivityFragment;
 import com.example.space.R;
 
-public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.ActivityViewHolder> {
+public class ExploreCountAdapter extends RecyclerView.Adapter<ExploreCountAdapter.ActivityViewHolder> {
 
     private ActivityFragment.ActivityItem[] activities;
 
-    public ActivityAdapter(ActivityFragment.ActivityItem[] activities) {
+    public ExploreCountAdapter(ActivityFragment.ActivityItem[] activities) {
         this.activities = activities;
     }
 
@@ -23,7 +23,7 @@ public class ActivityAdapter extends RecyclerView.Adapter<ActivityAdapter.Activi
     @Override
     public ActivityViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_activity, parent, false);
+                .inflate(R.layout.item_explore_countryact, parent, false);
         return new ActivityViewHolder(view);
     }
 
