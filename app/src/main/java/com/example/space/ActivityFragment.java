@@ -5,54 +5,37 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.example.space.adapters.ActivityAdapter;
+import com.example.space.adapters.TripAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class ActivityFragment extends Fragment {
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class ActivityFragment extends Fragment implements TripAdapter.OnTripClickListener {
 
     private RecyclerView recyclerView;
-    private ActivityAdapter adapter;
+    private TripAdapter adapter;
     private FloatingActionButton addButton;
+    private ProgressBar progressBar;
+    private TextView emptyStateTextView;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private SupabaseTrip supabaseTrip;
+    private List<Trip> tripList = new ArrayList<>();
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_activity, container, false);
-
-        // Initialize RecyclerView
-        recyclerView = view.findViewById(R.id.activity_recycler_view);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-
-        // Setup adapter with sample data
-        adapter = new ActivityAdapter(createSampleActivities());
-        recyclerView.setAdapter(adapter);
-
-        // Setup FAB for adding new activities
-        addButton = view.findViewById(R.id.fab_add_activity);
-        addButton.setOnClickListener(v -> {
-            // Navigate to AddTripActivity
-            Intent intent = new Intent(getActivity(), AddTripActivity.class);
-            startActivity(intent);
-        });
-
-        return view;
-    }
-
-    private ActivityItem[] createSampleActivities() {
-        return new ActivityItem[] {
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl)
-        };
-    }
-
-    // Model class for activity items
+    // Keep the original ActivityItem class to maintain compatibility
     public static class ActivityItem {
         private String title;
         private int imageResId;
@@ -69,5 +52,156 @@ public class ActivityFragment extends Fragment {
         public int getImageResId() {
             return imageResId;
         }
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_activity, container, false);
+
+        // Initialize views
+        recyclerView = view.findViewById(R.id.activity_recycler_view);
+
+        // Try to find the new UI elements, but don't crash if they don't exist
+        try {
+            progressBar = view.findViewById(R.id.progress_bar);
+            emptyStateTextView = view.findViewById(R.id.empty_state_text);
+            swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+
+            // Setup swipe to refresh
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setOnRefreshListener(this::loadTrips);
+            }
+        } catch (Exception e) {
+            // These views might not exist in the current layout
+        }
+
+        // Initialize RecyclerView
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+
+        // Setup adapter with empty list initially
+        adapter = new TripAdapter(getContext(), tripList, this);
+        recyclerView.setAdapter(adapter);
+
+        // Initialize Supabase client
+        supabaseTrip = new SupabaseTrip(getContext());
+
+        // Setup FAB for adding new activities
+        addButton = view.findViewById(R.id.fab_add_activity);
+        addButton.setOnClickListener(v -> {
+            // Navigate to AddTripActivity
+            Intent intent = new Intent(getActivity(), AddTripActivity.class);
+            startActivity(intent);
+        });
+
+        return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Load trips when fragment becomes visible
+        loadTrips();
+    }
+
+    private void loadTrips() {
+        // Show progress bar if available
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        // Hide empty state text initially if available
+        if (emptyStateTextView != null) {
+            emptyStateTextView.setVisibility(View.GONE);
+        }
+
+        // Load trips from Supabase
+        supabaseTrip.getUserTrips(new SupabaseTrip.TripDataCallback() {
+            @Override
+            public void onSuccess(List<Trip> trips) {
+                if (getActivity() == null) return; // Fragment is no longer attached
+
+                getActivity().runOnUiThread(() -> {
+                    // Update the trip list
+                    tripList.clear();
+                    tripList.addAll(trips);
+                    adapter.notifyDataSetChanged();
+
+                    // Hide progress indicators if available
+                    if (progressBar != null) {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
+
+                    // Show empty state if no trips and view is available
+                    if (emptyStateTextView != null) {
+                        if (trips.isEmpty()) {
+                            emptyStateTextView.setVisibility(View.VISIBLE);
+                        } else {
+                            emptyStateTextView.setVisibility(View.GONE);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                if (getActivity() == null) return; // Fragment is no longer attached
+
+                getActivity().runOnUiThread(() -> {
+                    // Hide progress indicators if available
+                    if (progressBar != null) {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
+
+                    // Show error message
+                    Toast.makeText(getContext(), "Error loading trips: " + error, Toast.LENGTH_SHORT).show();
+
+                    // Show empty state if available
+                    if (emptyStateTextView != null && tripList.isEmpty()) {
+                        emptyStateTextView.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void onTripClick(Trip trip) {
+        // Navigate to TripDetailActivity
+        Intent intent = new Intent(getActivity(), TripDetailActivity.class);
+        intent.putExtra("trip_id", trip.getTripId());
+        intent.putExtra("trip_name", trip.getTripName());
+        intent.putExtra("country", trip.getCountry());
+        intent.putExtra("journal", trip.getJournal());
+
+        // Format dates to pass to the detail activity
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        if (trip.getStartDate() != null) {
+            intent.putExtra("start_date", format.format(trip.getStartDate()));
+        }
+        if (trip.getEndDate() != null) {
+            intent.putExtra("end_date", format.format(trip.getEndDate()));
+        }
+
+        // Pass image URLs as ArrayList
+        ArrayList<String> imageUrls = new ArrayList<>(trip.getImageUrls());
+        intent.putStringArrayListExtra("image_urls", imageUrls);
+
+        startActivity(intent);
+    }
+
+    // For backward compatibility - create sample activities
+    private ActivityItem[] createSampleActivities() {
+        return new ActivityItem[] {
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl)
+        };
     }
 }
