@@ -35,7 +35,7 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
     @Override
     public TripViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_trip, parent, false);
+                .inflate(R.layout.explore_item_trip, parent, false);
         return new TripViewHolder(view);
     }
 
@@ -62,11 +62,11 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
             Glide.with(context)
                     .load(firstImageUrl)
                     .centerCrop()
-                    .placeholder(R.drawable.ic_launcher_background) // Replace with proper placeholder
+                    .placeholder(R.drawable.ic_unknown) // Replace with proper placeholder
                     .into(holder.tripImage);
         } else {
             // Set default image or hide image view
-            holder.tripImage.setImageResource(R.drawable.ic_launcher_background); // Replace with default image
+            holder.tripImage.setImageResource(R.drawable.ic_unknown); // Replace with default image
         }
 
         // Set click listener - can be used to navigate to trip details
