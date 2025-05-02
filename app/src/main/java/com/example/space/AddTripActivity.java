@@ -4,10 +4,12 @@ import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -26,6 +28,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.ByteArrayOutputStream;
@@ -60,6 +65,7 @@ public class AddTripActivity extends AppCompatActivity {
 
     private final Calendar calendar = Calendar.getInstance();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
+    private final SimpleDateFormat apiDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
     private List<String> uploadedImageUrls = new ArrayList<>();
     private List<View> imageViewContainers = new ArrayList<>();  // Track image containers for deletion
     private SupabaseTrip supabaseTrip;
@@ -164,6 +170,14 @@ public class AddTripActivity extends AppCompatActivity {
                 String endDateStr = intent.getStringExtra("end_date");
                 ArrayList<String> imageUrls = intent.getStringArrayListExtra("image_urls");
 
+                // Debug logging to verify received data
+                Log.d(TAG, "Editing trip: " + tripId);
+                Log.d(TAG, "Trip name: " + tripName);
+                Log.d(TAG, "Country: " + country);
+                Log.d(TAG, "Start date: " + startDateStr);
+                Log.d(TAG, "End date: " + endDateStr);
+                Log.d(TAG, "Image URLs size: " + (imageUrls != null ? imageUrls.size() : "null"));
+
                 // Set fields with existing data
                 if (tripName != null) tripNameInput.setText(tripName);
                 if (country != null) countryInput.setText(country);
@@ -183,30 +197,22 @@ public class AddTripActivity extends AppCompatActivity {
                         endDateInput.setText(dateFormat.format(endDate));
                     }
                 } catch (ParseException e) {
+                    Log.e(TAG, "Error parsing dates", e);
                     e.printStackTrace();
                 }
 
-                // Set image URLs
+                // Set image URLs and load images
                 if (imageUrls != null && !imageUrls.isEmpty()) {
-                    uploadedImageUrls.addAll(imageUrls);
+                    uploadedImageUrls = new ArrayList<>(imageUrls);
+                    uploadedImagesContainer.removeAllViews(); // Clear any existing views
 
-                    // Display placeholders for existing images
+                    // Display existing images with Glide
                     for (int i = 0; i < imageUrls.size(); i++) {
-                        String imageUrl = imageUrls.get(i);
+                        final String imageUrl = imageUrls.get(i);
+                        final int position = i;
 
-                        // Create placeholder thumbnail with delete button
-                        ImageView thumbnail = new ImageView(this);
-                        thumbnail.setLayoutParams(new LinearLayout.LayoutParams(200, 200));
-                        thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        thumbnail.setImageResource(R.drawable.ic_calendar);
-                        thumbnail.setPadding(8, 8, 8, 8);
-
-                        Bitmap bitmap = ((BitmapDrawable) thumbnail.getDrawable()).getBitmap();
-
-                        // Create container with delete button for this image
-                        View container = createImageContainerWithDeleteButton(bitmap, imageUrl, i);
-                        uploadedImagesContainer.addView(container);
-                        imageViewContainers.add(container);
+                        // Load image with Glide
+                        loadImageWithGlide(imageUrl, position);
                     }
 
                     // Update button text
@@ -234,6 +240,55 @@ public class AddTripActivity extends AppCompatActivity {
                     Toast.makeText(this, "Planning a trip to " + selectedCountry, Toast.LENGTH_SHORT).show();
                 }
             }
+        }
+    }
+
+    private void loadImageWithGlide(final String imageUrl, final int position) {
+        // Show placeholder while loading
+        View tempContainer = getLayoutInflater().inflate(R.layout.image_thumbnail_with_delete, null);
+        ImageView tempThumbnail = tempContainer.findViewById(R.id.image_thumbnail);
+        tempThumbnail.setImageResource(R.drawable.ic_calendar); // Use your placeholder image
+        uploadedImagesContainer.addView(tempContainer);
+        final View finalTempContainer = tempContainer;
+
+        // Use Glide to load the image
+        try {
+            Glide.with(this)
+                    .asBitmap()
+                    .load(imageUrl)
+                    .placeholder(R.drawable.ic_calendar)
+                    .into(new com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap bitmap, Transition<? super Bitmap> transition) {
+                            // Remove placeholder container
+                            uploadedImagesContainer.removeView(finalTempContainer);
+
+                            // Create container with the loaded image and delete button
+                            View container = createImageContainerWithDeleteButton(bitmap, imageUrl, position);
+                            uploadedImagesContainer.addView(container);
+                            imageViewContainers.add(container);
+                        }
+
+                        @Override
+                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                            super.onLoadFailed(errorDrawable);
+                            Log.e(TAG, "Failed to load image: " + imageUrl);
+                            uploadedImagesContainer.removeView(finalTempContainer);
+
+                            // Create container with placeholder image
+                            View container = createImageContainerWithDeleteButton(null, imageUrl, position);
+                            uploadedImagesContainer.addView(container);
+                            imageViewContainers.add(container);
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
+                            // Do nothing
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading image with Glide", e);
+            uploadedImagesContainer.removeView(finalTempContainer);
         }
     }
 
@@ -290,9 +345,8 @@ public class AddTripActivity extends AppCompatActivity {
             trip.setJournal(journalInput.getText().toString().trim());
 
             // Parse the start and end dates
-            SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
-            Date startDate = format.parse(startDateInput.getText().toString());
-            Date endDate = format.parse(endDateInput.getText().toString());
+            Date startDate = dateFormat.parse(startDateInput.getText().toString());
+            Date endDate = dateFormat.parse(endDateInput.getText().toString());
 
             trip.setStartDate(startDate);
             trip.setEndDate(endDate);
@@ -425,6 +479,7 @@ public class AddTripActivity extends AppCompatActivity {
             });
 
         } catch (IOException e) {
+            Log.e(TAG, "Error processing image", e);
             e.printStackTrace();
             progressBar.setVisibility(View.GONE);
             Toast.makeText(this, "Error processing image", Toast.LENGTH_SHORT).show();
@@ -513,6 +568,7 @@ public class AddTripActivity extends AppCompatActivity {
             });
 
         } catch (IOException e) {
+            Log.e(TAG, "Error processing batch image", e);
             e.printStackTrace();
 
             // Update progress even on error
