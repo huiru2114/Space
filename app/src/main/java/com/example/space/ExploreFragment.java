@@ -3,9 +3,13 @@ package com.example.space;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -13,25 +17,38 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExploreFragment extends Fragment {
 
+    private static final String TAG = "ExploreFragment";
     private RecyclerView exploreRecyclerView;
     private CountryListAdapter countryAdapter;
     private SearchView searchDestination;
     private ProgressBar progressBar;
     private TextView noTripsText;
     private SupabaseExplore supabaseExplore;
+    private SupabaseAuth supabaseAuth;
     private List<String> allCountries = new ArrayList<>();
-    private SwipeRefreshLayout swipeRefreshLayout; // Added SwipeRefreshLayout
-    private static final int REQUEST_LOGIN = 1001;
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    // Login box components
+    private CardView loginBoxCardView;
+    private EditText emailEditText;
+    private EditText passwordEditText;
+    private Button loginButton;
+    private TextView signupTextView;
+    private ProgressBar loginProgressBar;
+    private TextView loginMessageText;
 
     @Nullable
     @Override
@@ -44,7 +61,16 @@ public class ExploreFragment extends Fragment {
         searchDestination = view.findViewById(R.id.search_destination);
         progressBar = view.findViewById(R.id.explore_progress);
         noTripsText = view.findViewById(R.id.no_trips_text);
-        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout); // Initialize SwipeRefreshLayout
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+
+        // Initialize login box components
+        loginBoxCardView = view.findViewById(R.id.login_box_card);
+        emailEditText = view.findViewById(R.id.et_username);
+        passwordEditText = view.findViewById(R.id.et_password);
+        loginButton = view.findViewById(R.id.btn_login);
+        signupTextView = view.findViewById(R.id.tv_signup);
+        loginProgressBar = view.findViewById(R.id.login_progress_bar);
+        loginMessageText = view.findViewById(R.id.login_message_text);
 
         // Initialize adapter
         countryAdapter = new CountryListAdapter(getContext());
@@ -55,6 +81,7 @@ public class ExploreFragment extends Fragment {
 
         // Initialize Supabase explore service
         supabaseExplore = new SupabaseExplore(getContext());
+        supabaseAuth = new SupabaseAuth(getContext());
 
         // Setup search functionality
         setupSearch();
@@ -62,7 +89,104 @@ public class ExploreFragment extends Fragment {
         // Setup swipe refresh layout
         setupSwipeRefresh();
 
+        // Setup login box functionality
+        setupLoginBox();
+
         return view;
+    }
+
+    /**
+     * Setup login box functionality
+     */
+    private void setupLoginBox() {
+        // Initially hide the login box
+        loginBoxCardView.setVisibility(View.GONE);
+
+        // Login button click listener
+        loginButton.setOnClickListener(v -> {
+            handleLogin();
+        });
+
+        // Signup text click listener
+        signupTextView.setOnClickListener(v -> {
+            // Navigate to signup activity
+            Intent intent = new Intent(getContext(), SignupActivity.class);
+            startActivity(intent);
+        });
+    }
+
+    /**
+     * Handle login functionality
+     */
+    private void handleLogin() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
+
+        // Validate inputs
+        if (email.isEmpty()) {
+            emailEditText.setError("Email is required");
+            emailEditText.requestFocus();
+            return;
+        }
+
+        if (password.isEmpty()) {
+            passwordEditText.setError("Password is required");
+            passwordEditText.requestFocus();
+            return;
+        }
+
+        // Show login progress
+        showLoginLoading(true);
+
+        // Attempt login
+        supabaseAuth.signIn(email, password, new SupabaseAuth.AuthCallback() {
+            @Override
+            public void onSuccess(String message) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        showLoginLoading(false);
+
+                        // Hide login box
+                        loginBoxCardView.setVisibility(View.GONE);
+
+                        // Show success message
+                        Toast.makeText(getContext(), "Login successful!", Toast.LENGTH_SHORT).show();
+
+                        // Load user countries
+                        loadUserCountries();
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        showLoginLoading(false);
+
+                        // Show error message
+                        loginMessageText.setText(error);
+                        loginMessageText.setVisibility(View.VISIBLE);
+
+                        Toast.makeText(getContext(), error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * Show or hide login loading indicators
+     */
+    private void showLoginLoading(boolean isLoading) {
+        if (isLoading) {
+            loginProgressBar.setVisibility(View.VISIBLE);
+            loginButton.setEnabled(false);
+            loginMessageText.setVisibility(View.GONE);
+        } else {
+            loginProgressBar.setVisibility(View.GONE);
+            loginButton.setEnabled(true);
+        }
     }
 
     /**
@@ -103,34 +227,42 @@ public class ExploreFragment extends Fragment {
         loadUserCountries();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    /**
+     * Show login required UI instead of navigating to LoginActivity
+     */
+    private void showLoginBox(String message) {
+        // Make sure we're on the UI thread
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                // Show the login box
+                loginBoxCardView.setVisibility(View.VISIBLE);
 
-        if (requestCode == REQUEST_LOGIN) {
-            if (resultCode == Activity.RESULT_OK) {
-                // User successfully logged in, reload data
-                loadUserCountries();
-            } else if (resultCode == Activity.RESULT_CANCELED && data != null) {
-                // User pressed back button from login
-                boolean authRequired = data.getBooleanExtra("auth_required", false);
-                if (authRequired) {
-                    // Show a message that login is required
-                    Toast.makeText(getContext(),
-                            "Please log in to view your trips",
-                            Toast.LENGTH_SHORT).show();
+                // Set login message
+                if (message != null) {
+                    loginMessageText.setText(message);
+                    loginMessageText.setVisibility(View.VISIBLE);
+                } else {
+                    loginMessageText.setVisibility(View.GONE);
+                }
 
-                    // Show a more prominent message
-                    if (noTripsText != null) {
-                        noTripsText.setText("Please log in to view your trips");
-                        noTripsText.setVisibility(View.VISIBLE);
-                    }
-
-                    // Hide progress and recycler view
+                // Hide progress and recycler view
+                if (progressBar != null) {
                     progressBar.setVisibility(View.GONE);
+                }
+
+                if (exploreRecyclerView != null) {
                     exploreRecyclerView.setVisibility(View.GONE);
                 }
-            }
+
+                if (noTripsText != null) {
+                    noTripsText.setVisibility(View.GONE);
+                }
+
+                // Cancel any refresh that might be in progress
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            });
         }
     }
 
@@ -146,6 +278,7 @@ public class ExploreFragment extends Fragment {
             // Otherwise show the progress bar
             progressBar.setVisibility(View.VISIBLE);
             exploreRecyclerView.setVisibility(View.GONE);
+            loginBoxCardView.setVisibility(View.GONE); // Hide login box
             if (noTripsText != null) noTripsText.setVisibility(View.GONE);
         }
 
@@ -157,6 +290,7 @@ public class ExploreFragment extends Fragment {
                         // Hide all loading indicators
                         progressBar.setVisibility(View.GONE);
                         swipeRefreshLayout.setRefreshing(false);
+                        loginBoxCardView.setVisibility(View.GONE); // Hide login box
 
                         if (countries.isEmpty()) {
                             if (noTripsText != null) {
@@ -188,13 +322,24 @@ public class ExploreFragment extends Fragment {
                         // Hide all loading indicators
                         progressBar.setVisibility(View.GONE);
                         swipeRefreshLayout.setRefreshing(false);
-                        exploreRecyclerView.setVisibility(View.GONE);
 
-                        Toast.makeText(getContext(),
-                                "Error loading countries: " + error,
-                                Toast.LENGTH_SHORT).show();
+                        // Check if error is authentication related
+                        if (error.contains("Not authenticated") || error.contains("Please log in")) {
+                            showLoginBox("Please log in to view your trips");
+                        } else {
+                            exploreRecyclerView.setVisibility(View.GONE);
+                            Toast.makeText(getContext(),
+                                    "Error loading countries: " + error,
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
+            }
+        }, new SupabaseExplore.AuthFailureCallback() {
+            @Override
+            public void onAuthFailure(String message) {
+                // Handle auth failure by showing login box
+                showLoginBox(message);
             }
         });
     }

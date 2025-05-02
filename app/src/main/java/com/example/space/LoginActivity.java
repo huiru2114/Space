@@ -35,13 +35,14 @@ public class LoginActivity extends AppCompatActivity {
     private boolean fromExplore = false;
     // Error message passed from Explore fragment
     private String errorMessage = null;
-    // Flag to track if back button was pressed
-    private boolean backPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        // Add debug log to confirm activity creation
+        Log.d(TAG, "LoginActivity onCreate called");
 
         supabaseAuth = new SupabaseAuth(this);
         prefs = getSharedPreferences("AuthPrefs", MODE_PRIVATE);
@@ -51,6 +52,9 @@ public class LoginActivity extends AppCompatActivity {
         if (intent != null) {
             fromExplore = intent.getBooleanExtra("from_explore", false);
             errorMessage = intent.getStringExtra("error_message");
+
+            // Add debug log
+            Log.d(TAG, "fromExplore: " + fromExplore + ", errorMessage: " + errorMessage);
         }
 
         // Initialize views
@@ -68,10 +72,10 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> handleLogin());
         signupTextView.setOnClickListener(v -> navigateToSignup());
 
-        // Custom back button handler
+        // Custom back button handler - fixed to ensure it always goes back to explore
         backButton.setOnClickListener(v -> {
-            backPressed = true;
-            onBackPressed();
+            Log.d(TAG, "Back button clicked, fromExplore: " + fromExplore);
+            navigateBack();
         });
 
         // Show error message if provided
@@ -80,16 +84,31 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
+//    @Override
+//    public void onBackPressed() {
+//        Log.d(TAG, "System back pressed, fromExplore: " + fromExplore);
+//        navigateBack();
+//    }
+
+    // Method to handle both custom back button and system back button
+    private void navigateBack() {
+        Log.d(TAG, "navigateBack called, fromExplore: " + fromExplore);
         if (fromExplore) {
-            // If we came from explore and back is pressed, set result and finish
+            // If we came from explore, send back a result with auth_required=true
             Intent resultIntent = new Intent();
             resultIntent.putExtra("auth_required", true);
             setResult(RESULT_CANCELED, resultIntent);
+
+            // Log the result being set
+            Log.d(TAG, "Setting result CANCELED with auth_required=true");
+
             finish();
+
+            // Add a slide transition to make it visually clear we're going back
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
         } else {
-            super.onBackPressed();
+            // Regular finish for normal back navigation
+            finish();
         }
     }
 

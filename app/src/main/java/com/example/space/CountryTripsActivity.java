@@ -119,6 +119,17 @@ public class CountryTripsActivity extends AppCompatActivity {
                             Toast.LENGTH_SHORT).show();
                 });
             }
+        }, new SupabaseExplore.AuthFailureCallback() {
+            @Override
+            public void onAuthFailure(String message) {
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(CountryTripsActivity.this,
+                            message, Toast.LENGTH_SHORT).show();
+                    // You might want to finish the activity or redirect to login
+                    finish();
+                });
+            }
         });
     }
 

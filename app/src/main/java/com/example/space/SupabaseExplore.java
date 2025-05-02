@@ -1,7 +1,6 @@
 package com.example.space;
 
 import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,7 +29,11 @@ public class SupabaseExplore {
     private SupabaseAuth auth;
     private ExecutorService executor;
     private Context context;
-    public static final int REQUEST_LOGIN = 1001;
+
+    // Interface for authentication failure callback
+    public interface AuthFailureCallback {
+        void onAuthFailure(String message);
+    }
 
     // Constructor
     public SupabaseExplore(Context context) {
@@ -61,23 +64,28 @@ public class SupabaseExplore {
     /**
      * Get all countries the user has visited, with token refresh handling
      * @param callback Callback to handle the response
+     * @param authFailureCallback Callback to handle authentication failures
      */
-    public void getUserCountries(ExploreCallback callback) {
-        getUserCountriesInternal(callback, false);
+    public void getUserCountries(ExploreCallback callback, AuthFailureCallback authFailureCallback) {
+        getUserCountriesInternal(callback, authFailureCallback, false);
     }
 
     /**
      * Internal method to get user countries with token refresh capability
      * @param callback Callback to handle the response
+     * @param authFailureCallback Callback to handle authentication failures
      * @param isRetry Whether this is a retry after token refresh
      */
-    private void getUserCountriesInternal(ExploreCallback callback, boolean isRetry) {
+    private void getUserCountriesInternal(ExploreCallback callback, AuthFailureCallback authFailureCallback, boolean isRetry) {
         executor.execute(() -> {
             try {
                 String accessToken = auth.getAccessToken();
                 if (accessToken == null) {
                     Log.e(TAG, "No access token found");
-                    handleAuthFailure("Not authenticated. Please log in.");
+                    // Call the auth failure callback instead of launching LoginActivity
+                    if (authFailureCallback != null) {
+                        authFailureCallback.onAuthFailure("Not authenticated. Please log in.");
+                    }
                     callback.onError("Not authenticated. Please log in.");
                     return;
                 }
@@ -86,7 +94,10 @@ public class SupabaseExplore {
                 String userId = auth.getUserId();
                 if (userId == null) {
                     Log.e(TAG, "User ID not found");
-                    handleAuthFailure("User ID not found. Please log in.");
+                    // Call the auth failure callback instead of launching LoginActivity
+                    if (authFailureCallback != null) {
+                        authFailureCallback.onAuthFailure("User ID not found. Please log in.");
+                    }
                     callback.onError("User ID not found. Please log in.");
                     return;
                 }
@@ -145,9 +156,21 @@ public class SupabaseExplore {
                     // Check if the token has expired
                     if (errorResponse.contains("JWT expired") && !isRetry) {
                         // Try to refresh the token and retry the request
-                        refreshTokenAndRetry(() -> getUserCountriesInternal(callback, true),
-                                error -> callback.onError(error));
+                        refreshTokenAndRetry(() -> getUserCountriesInternal(callback, authFailureCallback, true),
+                                error -> {
+                                    if (authFailureCallback != null) {
+                                        authFailureCallback.onAuthFailure(error);
+                                    }
+                                    callback.onError(error);
+                                });
                     } else {
+                        if (errorResponse.contains("JWT") || errorResponse.contains("auth") ||
+                                responseCode == 401 || responseCode == 403) {
+                            // Authentication error
+                            if (authFailureCallback != null) {
+                                authFailureCallback.onAuthFailure("Authentication failed: " + errorResponse);
+                            }
+                        }
                         callback.onError("Failed to fetch countries: " + errorResponse);
                     }
                 }
@@ -165,24 +188,29 @@ public class SupabaseExplore {
      * Get trips for a specific country
      * @param country Country to get trips for
      * @param callback Callback to handle the response
+     * @param authFailureCallback Callback to handle authentication failures
      */
-    public void getTripsByCountry(String country, CountryTripsCallback callback) {
-        getTripsByCountryInternal(country, callback, false);
+    public void getTripsByCountry(String country, CountryTripsCallback callback, AuthFailureCallback authFailureCallback) {
+        getTripsByCountryInternal(country, callback, authFailureCallback, false);
     }
 
     /**
      * Internal method to get trips by country with token refresh capability
      * @param country Country to get trips for
      * @param callback Callback to handle the response
+     * @param authFailureCallback Callback to handle authentication failures
      * @param isRetry Whether this is a retry after token refresh
      */
-    private void getTripsByCountryInternal(String country, CountryTripsCallback callback, boolean isRetry) {
+    private void getTripsByCountryInternal(String country, CountryTripsCallback callback, AuthFailureCallback authFailureCallback, boolean isRetry) {
         executor.execute(() -> {
             try {
                 String accessToken = auth.getAccessToken();
                 if (accessToken == null) {
                     Log.e(TAG, "No access token found");
-                    handleAuthFailure("Not authenticated. Please log in.");
+                    // Call the auth failure callback instead of launching LoginActivity
+                    if (authFailureCallback != null) {
+                        authFailureCallback.onAuthFailure("Not authenticated. Please log in.");
+                    }
                     callback.onError("Not authenticated. Please log in.");
                     return;
                 }
@@ -191,7 +219,10 @@ public class SupabaseExplore {
                 String userId = auth.getUserId();
                 if (userId == null) {
                     Log.e(TAG, "User ID not found");
-                    handleAuthFailure("User ID not found. Please log in.");
+                    // Call the auth failure callback instead of launching LoginActivity
+                    if (authFailureCallback != null) {
+                        authFailureCallback.onAuthFailure("User ID not found. Please log in.");
+                    }
                     callback.onError("User ID not found. Please log in.");
                     return;
                 }
@@ -288,9 +319,21 @@ public class SupabaseExplore {
                     // Check if the token has expired
                     if (errorResponse.contains("JWT expired") && !isRetry) {
                         // Try to refresh the token and retry the request
-                        refreshTokenAndRetry(() -> getTripsByCountryInternal(country, callback, true),
-                                error -> callback.onError(error));
+                        refreshTokenAndRetry(() -> getTripsByCountryInternal(country, callback, authFailureCallback, true),
+                                error -> {
+                                    if (authFailureCallback != null) {
+                                        authFailureCallback.onAuthFailure(error);
+                                    }
+                                    callback.onError(error);
+                                });
                     } else {
+                        if (errorResponse.contains("JWT") || errorResponse.contains("auth") ||
+                                responseCode == 401 || responseCode == 403) {
+                            // Authentication error
+                            if (authFailureCallback != null) {
+                                authFailureCallback.onAuthFailure("Authentication failed: " + errorResponse);
+                            }
+                        }
                         callback.onError("Failed to fetch trips: " + errorResponse);
                     }
                 }
@@ -335,54 +378,15 @@ public class SupabaseExplore {
                 } else {
                     // Handle refresh failure
                     Log.e(TAG, "Token refresh failed");
-                    handleAuthFailure("Session expired. Please log in again.");
                     errorCallback.onError("Session expired. Please log in again.");
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error refreshing token: " + e.getMessage(), e);
-                handleAuthFailure("Authentication error: " + e.getMessage());
                 errorCallback.onError("Authentication error: " + e.getMessage());
             }
         });
     }
 
-    /**
-     * Handle authentication failure by redirecting to login
-     * @param message Error message to display
-     */
-    private void handleAuthFailure(String message) {
-        if (context != null) {
-            // Run on UI thread
-            android.os.Handler mainHandler = new android.os.Handler(context.getMainLooper());
-            mainHandler.post(() -> {
-                // Clear stored credentials
-                auth.signOut();
-
-                // Check if context is an Activity to use startActivityForResult
-                if (context instanceof AppCompatActivity) {
-                    AppCompatActivity activity = (AppCompatActivity) context;
-
-                    // Redirect to login screen for result
-                    Intent intent = new Intent(context, LoginActivity.class);
-
-                    // Don't clear the entire activity stack
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                    // Add flags to indicate we're coming from Explore
-                    intent.putExtra("from_explore", true);
-                    intent.putExtra("error_message", message);
-
-                    // Launch for result instead of just starting
-                    activity.startActivityForResult(intent, REQUEST_LOGIN);
-                } else {
-                    // Fallback for non-Activity contexts
-                    Intent intent = new Intent(context, LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    intent.putExtra("from_explore", true);
-                    intent.putExtra("error_message", message);
-                    context.startActivity(intent);
-                }
-            });
-        }
-    }
+    // We're removing the handleAuthFailure method since we won't be launching LoginActivity anymore
+    // Instead we'll use the AuthFailureCallback to notify ExploreFragment
 }
