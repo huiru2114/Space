@@ -19,12 +19,9 @@ import com.google.android.material.card.MaterialCardView;
 public class SettingsFragment extends Fragment {
 
     private MaterialCardView accountCard;
-    private MaterialCardView notificationsCard;
     private MaterialCardView appearanceCard;
-    private MaterialCardView privacyCard;
     private MaterialCardView helpCard;
     private Switch darkModeSwitch;
-    private Switch notificationsSwitch;
     private TextView versionTextView;
     private ImageView backButton;
 
@@ -40,12 +37,9 @@ public class SettingsFragment extends Fragment {
 
         // Initialize views
         accountCard = view.findViewById(R.id.card_account);
-        notificationsCard = view.findViewById(R.id.card_notifications);
         appearanceCard = view.findViewById(R.id.card_appearance);
-        privacyCard = view.findViewById(R.id.card_privacy);
         helpCard = view.findViewById(R.id.card_help);
         darkModeSwitch = view.findViewById(R.id.switch_dark_mode);
-        notificationsSwitch = view.findViewById(R.id.switch_notifications);
         versionTextView = view.findViewById(R.id.text_app_version);
         backButton = view.findViewById(R.id.btn_back);
 
@@ -60,9 +54,7 @@ public class SettingsFragment extends Fragment {
 
         // Set switch states based on saved preferences
         boolean isDarkMode = sharedPreferences.getBoolean("dark_mode", false);
-        boolean areNotificationsEnabled = sharedPreferences.getBoolean("notifications_enabled", true);
         darkModeSwitch.setChecked(isDarkMode);
-        notificationsSwitch.setChecked(areNotificationsEnabled);
 
         // Set click listeners
         setupClickListeners();
@@ -73,12 +65,10 @@ public class SettingsFragment extends Fragment {
     private void setupClickListeners() {
         // Set back button click listener
         backButton.setOnClickListener(v -> {
-            // Navigate back
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
         accountCard.setOnClickListener(v -> {
-            // Navigate to account settings fragment
             AccountSettingsFragment accountFragment = new AccountSettingsFragment();
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, accountFragment)
@@ -88,47 +78,20 @@ public class SettingsFragment extends Fragment {
 
         // Dark mode switch
         darkModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save preference
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean("dark_mode", isChecked);
-            // Save that we're in settings and want to return here
             editor.putString("current_fragment", "Settings");
             editor.apply();
 
-            // Show toast confirmation
             String message = isChecked ? "Dark mode enabled" : "Light mode enabled";
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
 
-            // Apply theme change with recreation, but we'll return to settings
             AppCompatDelegate.setDefaultNightMode(
                     isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
             );
         });
 
-        // Notifications switch
-        notificationsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save preference
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("notifications_enabled", isChecked);
-            editor.apply();
-
-            String message = isChecked ? "Notifications enabled" : "Notifications disabled";
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-        });
-
-        // Privacy settings
-        privacyCard.setOnClickListener(v -> {
-            // Navigate to privacy settings fragment
-            PrivacySettingsFragment privacyFragment = new PrivacySettingsFragment();
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, privacyFragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
-
-        // Help center
         helpCard.setOnClickListener(v -> {
-            // Navigate to help center fragment
             HelpCenterFragment helpFragment = new HelpCenterFragment();
             requireActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, helpFragment)
