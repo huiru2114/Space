@@ -1,5 +1,6 @@
 package com.example.space;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,6 +34,7 @@ public class CountryTripsActivity extends AppCompatActivity {
     private SupabaseExplore supabaseExplore;
     private String selectedCountry;
     private List<Trip> allTrips = new ArrayList<>();
+    private static final int TRIP_DETAIL_REQUEST_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +80,29 @@ public class CountryTripsActivity extends AppCompatActivity {
         // Load trips for selected country
         loadTripsForCountry();
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == TRIP_DETAIL_REQUEST_CODE) {
+            // Refresh trips regardless of result code to ensure we have the latest data
+            // This covers both edits (RESULT_OK) and deletions (could be another result code)
+            android.util.Log.d("CountryTripsActivity", "Returned from TripDetailActivity, refreshing trips");
+            loadTripsForCountry();
+
+            if (resultCode == RESULT_OK && data != null) {
+                // Handle any specific data returned if needed
+                boolean wasUpdated = data.getBooleanExtra("trip_updated", false);
+                boolean wasDeleted = data.getBooleanExtra("trip_deleted", false);
+
+                if (wasUpdated) {
+                    Toast.makeText(this, "Trip updated successfully", Toast.LENGTH_SHORT).show();
+                } else if (wasDeleted) {
+                    Toast.makeText(this, "Trip deleted successfully", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
 
     /**
      * Load trips for the selected country
@@ -99,8 +124,16 @@ public class CountryTripsActivity extends AppCompatActivity {
                     } else {
                         tripsRecyclerView.setVisibility(View.VISIBLE);
 
-                        // Process dates if needed
+                        // Process trips to ensure all needed fields are properly set
                         for (Trip trip : trips) {
+                            // Make sure the trip_id is properly set
+                            if (trip.getTripId() == null || trip.getTripId().isEmpty()) {
+                                // Log a warning if trip_id is missing
+                                android.util.Log.w("CountryTripsActivity",
+                                        "Trip missing ID: " + trip.getTripName());
+                            }
+
+                            // Process other fields as needed
                             processTrip(trip);
                         }
 

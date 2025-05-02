@@ -76,6 +76,12 @@ public class SupabaseExplore {
      * @param authFailureCallback Callback to handle authentication failures
      * @param isRetry Whether this is a retry after token refresh
      */
+    /**
+     * Internal method to get user countries with token refresh capability
+     * @param callback Callback to handle the response
+     * @param authFailureCallback Callback to handle authentication failures
+     * @param isRetry Whether this is a retry after token refresh
+     */
     private void getUserCountriesInternal(ExploreCallback callback, AuthFailureCallback authFailureCallback, boolean isRetry) {
         executor.execute(() -> {
             try {
@@ -133,8 +139,9 @@ public class SupabaseExplore {
 
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject tripObj = jsonArray.getJSONObject(i);
-                        String country = tripObj.getString("country");
-                        uniqueCountries.add(country);
+                        if (!tripObj.isNull("country")) {
+                            uniqueCountries.add(tripObj.getString("country"));
+                        }
                     }
 
                     List<String> countries = new ArrayList<>(uniqueCountries);
@@ -266,6 +273,15 @@ public class SupabaseExplore {
                         trip.setTripName(tripObj.getString("trip_name"));
                         trip.setCountry(tripObj.getString("country"));
 
+                        // CRITICAL FIX: Make sure we extract and set the trip_id first and foremost
+                        if (!tripObj.isNull("trip_id")) {
+                            trip.setTripId(tripObj.getString("trip_id"));
+                            // Log the trip_id to verify it's being extracted
+                            android.util.Log.d("SupabaseExplore", "Extracted trip_id: " + trip.getTripId());
+                        } else {
+                            android.util.Log.e("SupabaseExplore", "Trip missing ID in database response: " + trip.getTripName());
+                        }
+
                         if (!tripObj.isNull("journal")) {
                             trip.setJournal(tripObj.getString("journal"));
                         }
@@ -275,7 +291,6 @@ public class SupabaseExplore {
                             String startDateStr = tripObj.getString("start_date");
                             trip.setRawStartDate(startDateStr);
 
-                            // We'll convert the string to Date object in the activity
                         }
 
                         if (!tripObj.isNull("end_date")) {
