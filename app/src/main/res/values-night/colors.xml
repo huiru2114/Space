@@ -18,7 +18,7 @@
     <!-- Feature colors - keeping your favorites unchanged -->
     <color name="light_blue">#26C6DA</color>            <!-- Your beautiful teal-blue -->
     <color name="light_blue_background">#121C22</color> <!-- Your dark blue background -->
-
+    <color name="explore_white">@android:color/transparent</color>
     <!-- Additional accent colors -->
     <color name="card_stroke">#263238</color>           <!-- Card stroke color in blue family -->
     <color name="input_background">#172126</color>      <!-- Slightly lighter than background for input fields -->
