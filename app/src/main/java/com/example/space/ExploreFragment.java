@@ -1,5 +1,7 @@
 package com.example.space;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +31,7 @@ public class ExploreFragment extends Fragment {
     private SupabaseExplore supabaseExplore;
     private List<String> allCountries = new ArrayList<>();
     private SwipeRefreshLayout swipeRefreshLayout; // Added SwipeRefreshLayout
+    private static final int REQUEST_LOGIN = 1001;
 
     @Nullable
     @Override
@@ -98,6 +101,37 @@ public class ExploreFragment extends Fragment {
         super.onResume();
         // Refresh countries list when returning to this fragment
         loadUserCountries();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_LOGIN) {
+            if (resultCode == Activity.RESULT_OK) {
+                // User successfully logged in, reload data
+                loadUserCountries();
+            } else if (resultCode == Activity.RESULT_CANCELED && data != null) {
+                // User pressed back button from login
+                boolean authRequired = data.getBooleanExtra("auth_required", false);
+                if (authRequired) {
+                    // Show a message that login is required
+                    Toast.makeText(getContext(),
+                            "Please log in to view your trips",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Show a more prominent message
+                    if (noTripsText != null) {
+                        noTripsText.setText("Please log in to view your trips");
+                        noTripsText.setVisibility(View.VISIBLE);
+                    }
+
+                    // Hide progress and recycler view
+                    progressBar.setVisibility(View.GONE);
+                    exploreRecyclerView.setVisibility(View.GONE);
+                }
+            }
+        }
     }
 
     /**

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -28,6 +30,7 @@ public class SupabaseExplore {
     private SupabaseAuth auth;
     private ExecutorService executor;
     private Context context;
+    public static final int REQUEST_LOGIN = 1001;
 
     // Constructor
     public SupabaseExplore(Context context) {
@@ -355,11 +358,30 @@ public class SupabaseExplore {
                 // Clear stored credentials
                 auth.signOut();
 
-                // Redirect to login screen
-                Intent intent = new Intent(context, LoginActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                intent.putExtra("error_message", message);
-                context.startActivity(intent);
+                // Check if context is an Activity to use startActivityForResult
+                if (context instanceof AppCompatActivity) {
+                    AppCompatActivity activity = (AppCompatActivity) context;
+
+                    // Redirect to login screen for result
+                    Intent intent = new Intent(context, LoginActivity.class);
+
+                    // Don't clear the entire activity stack
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                    // Add flags to indicate we're coming from Explore
+                    intent.putExtra("from_explore", true);
+                    intent.putExtra("error_message", message);
+
+                    // Launch for result instead of just starting
+                    activity.startActivityForResult(intent, REQUEST_LOGIN);
+                } else {
+                    // Fallback for non-Activity contexts
+                    Intent intent = new Intent(context, LoginActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.putExtra("from_explore", true);
+                    intent.putExtra("error_message", message);
+                    context.startActivity(intent);
+                }
             });
         }
     }
