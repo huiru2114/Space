@@ -99,8 +99,16 @@ public class CountryTripsActivity extends AppCompatActivity {
                     } else {
                         tripsRecyclerView.setVisibility(View.VISIBLE);
 
-                        // Process dates if needed
+                        // Process trips to ensure all needed fields are properly set
                         for (Trip trip : trips) {
+                            // Make sure the trip_id is properly set
+                            if (trip.getTripId() == null || trip.getTripId().isEmpty()) {
+                                // Log a warning if trip_id is missing
+                                android.util.Log.w("CountryTripsActivity",
+                                        "Trip missing ID: " + trip.getTripName());
+                            }
+
+                            // Process other fields as needed
                             processTrip(trip);
                         }
 
