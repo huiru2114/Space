@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/tab_indicator_selected" android:state_selected="true" />
-    <item android:drawable="@drawable/tab_indicator_default" />
+    <!-- When selected, use white dot -->
+    <item android:state_selected="true">
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
+
+    <!-- When not selected, use semi-transparent white dot -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#80FFFFFF" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
 </selector>
