@@ -17,7 +17,6 @@ import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -84,22 +83,40 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
             // Create intent to navigate to trip details
             Intent intent = new Intent(context, TripDetailActivity.class);
 
-            // Pass trip details to the detail activity
-            intent.putExtra("trip_id", trip.getTripId()); // Assuming Trip class has getId method
+            // CRITICAL FIX: Make sure we're getting the correct trip_id
+            // Check if the trip object has a valid tripId field
+            if (trip.getTripId() == null || trip.getTripId().isEmpty()) {
+                // If no tripId is available, log this problem
+                android.util.Log.e("TripListAdapter", "Trip ID is missing for trip: " + trip.getTripName());
+                Toast.makeText(context, "Error: Trip ID is missing", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Add the trip_id extra to the intent
+            intent.putExtra("trip_id", trip.getTripId());
+
+            // Log the trip_id to debug
+            android.util.Log.d("TripListAdapter", "Navigating to trip details with ID: " + trip.getTripId());
+
+            // Add the rest of the intent extras
             intent.putExtra("trip_name", trip.getTripName());
             intent.putExtra("country", trip.getCountry());
-            intent.putExtra("journal", trip.getJournal());
+
+            // Pass journal content if available
+            if (trip.getJournal() != null) {
+                intent.putExtra("journal", trip.getJournal());
+            }
 
             // Format dates to strings if they exist
+            SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
             if (trip.getStartDate() != null) {
-                SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
                 intent.putExtra("start_date", apiFormat.format(trip.getStartDate()));
             } else if (trip.getRawStartDate() != null) {
                 intent.putExtra("start_date", trip.getRawStartDate());
             }
 
             if (trip.getEndDate() != null) {
-                SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
                 intent.putExtra("end_date", apiFormat.format(trip.getEndDate()));
             } else if (trip.getRawEndDate() != null) {
                 intent.putExtra("end_date", trip.getRawEndDate());
