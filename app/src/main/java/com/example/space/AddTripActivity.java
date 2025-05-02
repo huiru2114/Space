@@ -20,7 +20,10 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,13 +46,14 @@ public class AddTripActivity extends AppCompatActivity {
     private EditText tripNameInput;
     private EditText countryInput;
     private EditText journalInput;
-    private Button addPhotosButton;
-    private Button addTripButton;
+    private MaterialButton addPhotosButton;
+    private MaterialButton addTripButton;
     private ImageButton backButton;
     private CardView photoArea;
     private LinearLayout uploadedImagesContainer;
     private ProgressBar progressBar;
     private TextView uploadStatus;
+    private Toolbar toolbar;
 
     private final Calendar calendar = Calendar.getInstance();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
@@ -80,14 +84,28 @@ public class AddTripActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        // Initialize toolbar
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        backButton = findViewById(R.id.btn_back);
+
+        // Get the photo area
+        photoArea = findViewById(R.id.photo_area);
+
+        // Initialize date fields
         startDateInput = findViewById(R.id.start_date);
         endDateInput = findViewById(R.id.end_date);
+
+        // Initialize trip details fields
         tripNameInput = findViewById(R.id.trip_name_input);
         countryInput = findViewById(R.id.country_input);
         journalInput = findViewById(R.id.journal_input);
+
+        // Initialize buttons
         addPhotosButton = findViewById(R.id.btn_add_photos);
         addTripButton = findViewById(R.id.btn_add_trip);
-        backButton = findViewById(R.id.btn_back);
 
         // Get the uploaded images container from layout
         uploadedImagesContainer = findViewById(R.id.uploaded_images_container);
@@ -95,27 +113,8 @@ public class AddTripActivity extends AppCompatActivity {
         // Get progress bar from layout
         progressBar = findViewById(R.id.progress_bar);
 
-        // Add upload status text view - if you don't have this in your layout, you'll need to add it
+        // Get upload status text view
         uploadStatus = findViewById(R.id.upload_status);
-        if (uploadStatus == null) {
-            // Create a TextView programmatically if it doesn't exist in your layout
-            uploadStatus = new TextView(this);
-            uploadStatus.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-            uploadStatus.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            uploadStatus.setVisibility(View.GONE);
-
-            // Find a suitable parent to add this to (e.g., below the images container)
-            // This depends on your actual layout structure
-            View parent = findViewById(R.id.photo_area);
-            if (parent instanceof CardView) {
-                View child = ((CardView) parent).getChildAt(0);
-                if (child instanceof LinearLayout) {
-                    ((LinearLayout) child).addView(uploadStatus);
-                }
-            }
-        }
 
         // Set current date as default
         String today = dateFormat.format(calendar.getTime());
