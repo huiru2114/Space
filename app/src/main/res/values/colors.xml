@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#2980B9</color>
     <color name="colorAccent">#2196F3</color>
     <color name="bottom_nav_background">#FFFFFF</color>
+    <color name="explore_white">#FFFFFF</color>
     <color name="activity_card_background">#EEEEEE</color>
     <color name="fab_background">#3498DB</color>
     <color name="text_primary">#212121</color>
