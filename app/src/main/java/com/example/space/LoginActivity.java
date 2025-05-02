@@ -73,10 +73,10 @@ public class LoginActivity extends AppCompatActivity {
         signupTextView.setOnClickListener(v -> navigateToSignup());
 
         // Custom back button handler - fixed to ensure it always goes back to explore
-        backButton.setOnClickListener(v -> {
-            Log.d(TAG, "Back button clicked, fromExplore: " + fromExplore);
-            navigateBack();
-        });
+//        backButton.setOnClickListener(v -> {
+//            Log.d(TAG, "Back button clicked, fromExplore: " + fromExplore);
+//            navigateBack();
+//        });
 
         // Show error message if provided
         if (errorMessage != null && !errorMessage.isEmpty()) {
@@ -91,26 +91,26 @@ public class LoginActivity extends AppCompatActivity {
 //    }
 
     // Method to handle both custom back button and system back button
-    private void navigateBack() {
-        Log.d(TAG, "navigateBack called, fromExplore: " + fromExplore);
-        if (fromExplore) {
-            // If we came from explore, send back a result with auth_required=true
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("auth_required", true);
-            setResult(RESULT_CANCELED, resultIntent);
-
-            // Log the result being set
-            Log.d(TAG, "Setting result CANCELED with auth_required=true");
-
-            finish();
-
-            // Add a slide transition to make it visually clear we're going back
-            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
-        } else {
-            // Regular finish for normal back navigation
-            finish();
-        }
-    }
+//    private void navigateBack() {
+//        Log.d(TAG, "navigateBack called, fromExplore: " + fromExplore);
+//        if (fromExplore) {
+//            // If we came from explore, send back a result with auth_required=true
+//            Intent resultIntent = new Intent();
+//            resultIntent.putExtra("auth_required", true);
+//            setResult(RESULT_CANCELED, resultIntent);
+//
+//            // Log the result being set
+//            Log.d(TAG, "Setting result CANCELED with auth_required=true");
+//
+//            finish();
+//
+//            // Add a slide transition to make it visually clear we're going back
+//            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+//        } else {
+//            // Regular finish for normal back navigation
+//            finish();
+//        }
+//    }
 
     // Navigate to login screen after email confirmation
     private void proceedToLogin() {
