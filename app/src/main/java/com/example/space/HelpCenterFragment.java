@@ -32,57 +32,54 @@ public class HelpCenterFragment extends Fragment {
 
     private void setupFaqItems(View view) {
         // FAQ Item 1
-        LinearLayout faqItem1 = view.findViewById(R.id.faq_item_1);
-        TextView faqAnswer1 = view.findViewById(R.id.faq_answer_1);
-        faqItem1.setOnClickListener(v -> {
-            if (faqAnswer1.getVisibility() == View.VISIBLE) {
-                faqAnswer1.setVisibility(View.GONE);
-            } else {
-                faqAnswer1.setVisibility(View.VISIBLE);
-            }
-        });
+        setupFaqItem(view, R.id.faq_item_1, R.id.faq_answer_1);
 
         // FAQ Item 2
-        LinearLayout faqItem2 = view.findViewById(R.id.faq_item_2);
-        TextView faqAnswer2 = view.findViewById(R.id.faq_answer_2);
-        faqItem2.setOnClickListener(v -> {
-            if (faqAnswer2.getVisibility() == View.VISIBLE) {
-                faqAnswer2.setVisibility(View.GONE);
-            } else {
-                faqAnswer2.setVisibility(View.VISIBLE);
-            }
-        });
+        setupFaqItem(view, R.id.faq_item_2, R.id.faq_answer_2);
 
         // FAQ Item 3
-        LinearLayout faqItem3 = view.findViewById(R.id.faq_item_3);
-        TextView faqAnswer3 = view.findViewById(R.id.faq_answer_3);
-        faqItem3.setOnClickListener(v -> {
-            if (faqAnswer3.getVisibility() == View.VISIBLE) {
-                faqAnswer3.setVisibility(View.GONE);
-            } else {
-                faqAnswer3.setVisibility(View.VISIBLE);
-            }
-        });
+        setupFaqItem(view, R.id.faq_item_3, R.id.faq_answer_3);
 
         // FAQ Item 4
-        LinearLayout faqItem4 = view.findViewById(R.id.faq_item_4);
-        TextView faqAnswer4 = view.findViewById(R.id.faq_answer_4);
-        faqItem4.setOnClickListener(v -> {
-            if (faqAnswer4.getVisibility() == View.VISIBLE) {
-                faqAnswer4.setVisibility(View.GONE);
-            } else {
-                faqAnswer4.setVisibility(View.VISIBLE);
-            }
-        });
+        setupFaqItem(view, R.id.faq_item_4, R.id.faq_answer_4);
 
         // FAQ Item 5
-        LinearLayout faqItem5 = view.findViewById(R.id.faq_item_5);
-        TextView faqAnswer5 = view.findViewById(R.id.faq_answer_5);
-        faqItem5.setOnClickListener(v -> {
-            if (faqAnswer5.getVisibility() == View.VISIBLE) {
-                faqAnswer5.setVisibility(View.GONE);
+        setupFaqItem(view, R.id.faq_item_5, R.id.faq_answer_5);
+
+        // FAQ Item 6
+        setupFaqItem(view, R.id.faq_item_6, R.id.faq_answer_6);
+
+        // FAQ Item 7
+        setupFaqItem(view, R.id.faq_item_7, R.id.faq_answer_7);
+
+        // FAQ Item 8
+        setupFaqItem(view, R.id.faq_item_8, R.id.faq_answer_8);
+
+        // FAQ Item 9
+        setupFaqItem(view, R.id.faq_item_9, R.id.faq_answer_9);
+
+        // FAQ Item 10
+        setupFaqItem(view, R.id.faq_item_10, R.id.faq_answer_10);
+
+        // FAQ Item 11
+        setupFaqItem(view, R.id.faq_item_11, R.id.faq_answer_11);
+
+        // FAQ Item 12
+        setupFaqItem(view, R.id.faq_item_12, R.id.faq_answer_12);
+
+        // FAQ Item 13
+        setupFaqItem(view, R.id.faq_item_13, R.id.faq_answer_13);
+    }
+
+    private void setupFaqItem(View view, int itemId, int answerId) {
+        LinearLayout faqItem = view.findViewById(itemId);
+        TextView faqAnswer = view.findViewById(answerId);
+
+        faqItem.setOnClickListener(v -> {
+            if (faqAnswer.getVisibility() == View.VISIBLE) {
+                faqAnswer.setVisibility(View.GONE);
             } else {
-                faqAnswer5.setVisibility(View.VISIBLE);
+                faqAnswer.setVisibility(View.VISIBLE);
             }
         });
     }

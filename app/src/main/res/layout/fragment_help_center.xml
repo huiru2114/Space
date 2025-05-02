@@ -217,7 +217,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@color/light_blue_background"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -228,7 +229,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Can I download or export my trip data?"
+                        android:text="What is the Globe View on the Home screen?"
                         android:textAppearance="?attr/textAppearanceSubtitle1"
                         android:textColor="@color/colorPrimary" />
 
@@ -243,25 +244,322 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Yes! Go to any trip and tap the share icon in the top menu. You can export your trip as a PDF document including photos and journal entries, or share it directly with friends through various apps."
+                    android:text="The interactive 3D globe allows you to explore different countries. Tap on any country to see its name and the Start Planning button."
                     android:textAppearance="?attr/textAppearanceBody2"
                     android:visibility="gone" />
             </LinearLayout>
 
-            <TextView
+            <!-- FAQ Item 6 -->
+            <LinearLayout
+                android:id="@+id/faq_item_6"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
-                android:text="Need more help?"
-                android:textAppearance="?attr/textAppearanceSubtitle1" />
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_contact_support"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="How do I delete a trip?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Open the trip you want to delete, then tap the delete icon in the top right corner, confirm deletion when prompted."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 7 -->
+            <LinearLayout
+                android:id="@+id/faq_item_7"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Contact Support"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="How do I edit my account details?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Go to the Profile tab, tap on your account information, update your email, username, or password as needed, and save your changes."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 8 -->
+            <LinearLayout
+                android:id="@+id/faq_item_8"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="How do I view my travel statistics?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_8"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Go to the Profile tab, then tap on 'Travel Summary' to view your total trips, countries visited, journal entries, and favorite place."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 9 -->
+            <LinearLayout
+                android:id="@+id/faq_item_9"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="How do I search for specific trips or country?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_9"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Go to the Explore page, use the search bar at the top, and type the destination country name to filter your trips."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 10 -->
+            <LinearLayout
+                android:id="@+id/faq_item_10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Can I organize my trips by date or destination?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_10"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Yes, in the Explore page, you can sort your trips by date (newest/oldest) or alphabetically by destination country."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 11 -->
+            <LinearLayout
+                android:id="@+id/faq_item_11"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Why can't I see my saved trips?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_11"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Make sure you're logged into the correct account, check your internet connection to sync with the cloud, and pull down to refresh the Activity screen."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 12 -->
+            <LinearLayout
+                android:id="@+id/faq_item_12"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Why is the globe not loading correctly?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_12"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Ensure you have a stable internet connection, and try closing and reopening the app."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- FAQ Item 13 -->
+            <LinearLayout
+                android:id="@+id/faq_item_13"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/light_blue_background"
+                android:padding="16dp"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="What happens when I click on a country on the globe?"
+                        android:textAppearance="?attr/textAppearanceSubtitle1"
+                        android:textColor="@color/colorPrimary" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_expand_more" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/faq_answer_13"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="When you click on a country, a popup appears showing the country name and a 'Start Planning' button that takes you to the Add Trip page."
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:visibility="gone" />
+            </LinearLayout>
 
         </LinearLayout>
     </LinearLayout>
