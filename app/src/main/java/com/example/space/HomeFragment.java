@@ -16,15 +16,28 @@ import androidx.fragment.app.Fragment;
 
 import com.airbnb.lottie.LottieAnimationView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Locale;
+
 public class HomeFragment extends Fragment {
 
     private LottieAnimationView animationBackground;
     private WebView cesiumWebView;
+    private SupabaseTrip supabaseTrip;
+    private List<Trip> userTrips;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
+
+        // Initialize SupabaseTrip to fetch user trips
+        supabaseTrip = new SupabaseTrip(requireContext());
 
         // Initialize animation view
         animationBackground = view.findViewById(R.id.animation_background);
@@ -35,6 +48,9 @@ public class HomeFragment extends Fragment {
         // Initialize Cesium WebView
         cesiumWebView = view.findViewById(R.id.cesium_webview);
         setupCesiumWebView();
+
+        // Load user trips
+        loadUserTrips();
 
         return view;
     }
@@ -70,10 +86,84 @@ public class HomeFragment extends Fragment {
                                 "(typeof AndroidInterface !== 'undefined' ? 'available' : 'not available'));",
                         null
                 );
+
+                // If we have trip data, send it to the WebView
+                if (userTrips != null && !userTrips.isEmpty()) {
+                    sendTripsToWebView();
+                }
             }
         });
 
         cesiumWebView.loadUrl("file:///android_asset/globe/webmap.html");
+    }
+
+    /**
+     * Load the user's trips from Supabase
+     */
+    private void loadUserTrips() {
+        supabaseTrip.getUserTrips(new SupabaseTrip.TripDataCallback() {
+            @Override
+            public void onSuccess(List<Trip> trips) {
+                userTrips = trips;
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        // Send trips to WebView if it's already loaded
+                        if (cesiumWebView != null) {
+                            sendTripsToWebView();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                System.out.println("Error loading trips: " + error);
+            }
+        });
+    }
+
+    /**
+     * Send trip data to the WebView as JSON
+     */
+    private void sendTripsToWebView() {
+        try {
+            // Convert trips to JSON array
+            JSONArray tripsArray = new JSONArray();
+            SimpleDateFormat sqlDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+            for (Trip trip : userTrips) {
+                JSONObject tripObj = new JSONObject();
+                tripObj.put("tripId", trip.getTripId());
+                tripObj.put("tripName", trip.getTripName());
+                tripObj.put("country", trip.getCountry());
+                tripObj.put("journal", trip.getJournal());
+
+                // Format dates
+                if (trip.getStartDate() != null) {
+                    tripObj.put("startDate", sqlDateFormat.format(trip.getStartDate()));
+                }
+                if (trip.getEndDate() != null) {
+                    tripObj.put("endDate", sqlDateFormat.format(trip.getEndDate()));
+                }
+
+                // Add image URLs
+                JSONArray imageUrlsArray = trip.getImageUrlsAsJsonArray();
+                tripObj.put("imageUrls", imageUrlsArray);
+
+                tripsArray.put(tripObj);
+            }
+
+            // Call JavaScript function to load trips
+            final String tripsJson = tripsArray.toString();
+            cesiumWebView.evaluateJavascript(
+                    "loadTripPins(" + tripsJson + ");",
+                    null
+            );
+
+            System.out.println("Sent " + userTrips.size() + " trips to WebView");
+        } catch (JSONException e) {
+            System.out.println("Error creating JSON for trips: " + e.getMessage());
+        }
     }
 
     @Override
@@ -83,6 +173,9 @@ public class HomeFragment extends Fragment {
             animationBackground.resumeAnimation();
         }
         cesiumWebView.onResume();
+
+        // Reload trips when fragment resumes (to get any new trips)
+        loadUserTrips();
     }
 
     @Override
@@ -114,6 +207,37 @@ public class HomeFragment extends Fragment {
                 });
             } else {
                 System.out.println("Cannot launch AddTripActivity: getActivity() returned null");
+            }
+        }
+
+        @JavascriptInterface
+        public void onTripSelected(final String tripId) {
+            if (getActivity() != null) {
+                // Log message for debugging purposes
+                System.out.println("onTripSelected: " + tripId);
+
+                // Must use runOnUiThread for UI operations
+                getActivity().runOnUiThread(() -> {
+                    // Find the selected trip
+                    Trip selectedTrip = null;
+                    for (Trip trip : userTrips) {
+                        if (trip.getTripId().equals(tripId)) {
+                            selectedTrip = trip;
+                            break;
+                        }
+                    }
+
+                    if (selectedTrip != null) {
+                        // Launch ViewTripActivity with the selected trip
+                        Intent intent = new Intent(getActivity(), TripDetailActivity.class);
+                        intent.putExtra("trip_id", tripId);
+                        startActivity(intent);
+                    } else {
+                        System.out.println("Trip not found with ID: " + tripId);
+                    }
+                });
+            } else {
+                System.out.println("Cannot launch ViewTripActivity: getActivity() returned null");
             }
         }
 

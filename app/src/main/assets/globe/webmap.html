@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Mapbox Webmap</title>
+    <title>Space Trip Globe</title>
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.11.0/mapbox-gl.css' rel='stylesheet' />
@@ -76,161 +76,397 @@
             background-color: #a1d6ff;
             transform: translateY(-2px);
         }
+
+        /* Trip pin styles */
+        .trip-pin {
+            width: 20px;
+            height: 20px;
+            background-color: #FF5C87;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 8px rgba(255, 92, 135, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trip-pin:hover {
+            transform: rotate(-45deg) scale(1.2);
+            box-shadow: 0 0 12px rgba(255, 92, 135, 1);
+        }
+
+        .journal-title {
+            color: #FF5C87;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+        }
+
+        .journal-date {
+            color: #86CCFF;
+            font-size: 12px;
+            margin: 0 0 12px 0;
+        }
+
+        .journal-preview {
+            color: white;
+            font-size: 14px;
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+            max-height: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
     </style>
 </head>
 <body>
 <div id="map"></div>
 <script>
-        // Interface for communicating with Android
-        // This will be initialized automatically when the WebView adds the JavaScript interface
+    // Store trips data
+    let userTrips = [];
 
-        mapboxgl.accessToken = "pk.eyJ1IjoiaHVpcnUyMTE0IiwiYSI6ImNtOXdnd2ZobzB2dTkyaW9iMXM0dXp6cHcifQ.HuGABZwV2oHtQOF77Rdu-w";
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/satellite-streets-v12',
-            projection: 'globe',
-            zoom: 0.3,              // lower zoom makes the globe smaller
-            center: [0, 20],        // adjust to focus view
-            pitch: 0,
-            bearing: 0
-        });
+    mapboxgl.accessToken = "pk.eyJ1IjoiaHVpcnUyMTE0IiwiYSI6ImNtOXdnd2ZobzB2dTkyaW9iMXM0dXp6cHcifQ.HuGABZwV2oHtQOF77Rdu-w";
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/satellite-streets-v12',
+        projection: 'globe',
+        zoom: 0.3,
+        center: [0, 20],
+        pitch: 0,
+        bearing: 0
+    });
 
-        // Track active popup
-        let activePopup = null;
+    // Track active popup
+    let activePopup = null;
 
-        map.on('style.load', () => {
-            // Set the map background layer to transparent
-            if (map.getLayer('background')) {
-                map.setPaintProperty('background', 'background-color', 'rgba(0, 0, 0, 0)');
+    // Function to load trip pins
+    function loadTripPins(tripsData) {
+        try {
+            // Parse the JSON if it's a string
+            if (typeof tripsData === 'string') {
+                userTrips = JSON.parse(tripsData);
+            } else {
+                userTrips = tripsData;
             }
+            console.log("Loaded trips data:", userTrips);
 
-            // Optional: Set fog to transparent if globe is visible
-            map.setFog({
-                "color": "rgba(0, 0, 0, 0)", // transparent globe
-                "high-color": "rgba(0, 0, 0, 0)",
-                "space-color": "rgba(0, 0, 0, 0)",
-                "star-intensity": 0.0
-            });
-
-            // Add country boundary layer
-            map.addSource('country-boundaries', {
-                type: 'vector',
-                url: 'mapbox://mapbox.country-boundaries-v1'
-            });
-
-            map.addLayer({
-                'id': 'country-boundaries',
-                'type': 'fill',
-                'source': 'country-boundaries',
-                'source-layer': 'country_boundaries',
-                'paint': {
-                    'fill-color': 'rgba(0, 0, 0, 0)',
-                    'fill-outline-color': 'rgba(0, 0, 0, 0)'
-                }
-            });
-
-            // Add hover effect
-            map.addLayer({
-                'id': 'country-boundaries-hover',
-                'type': 'fill',
-                'source': 'country-boundaries',
-                'source-layer': 'country_boundaries',
-                'paint': {
-                    'fill-color': 'rgba(134, 204, 255, 0.3)',
-                    'fill-outline-color': 'rgba(134, 204, 255, 0.8)'
-                },
-                'filter': ['==', 'iso_3166_1', '']
-            });
-
-            // Change cursor when hovering over a country
-            map.on('mousemove', 'country-boundaries', (e) => {
-                if (e.features.length > 0) {
-                    map.getCanvas().style.cursor = 'pointer';
-
-                    const countryCode = e.features[0].properties.iso_3166_1;
-                    map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', countryCode]);
-                }
-            });
-
-            // Reset cursor when not hovering over a country
-            map.on('mouseleave', 'country-boundaries', () => {
-                map.getCanvas().style.cursor = '';
-                map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', '']);
-            });
-
-            // Handle click on a country
-            map.on('click', 'country-boundaries', (e) => {
-                if (e.features.length > 0) {
-                    const feature = e.features[0];
-                    const countryName = feature.properties.name_en;
-
-                    // Close any previously active popup
-                    if (activePopup) {
-                        activePopup.remove();
-                    }
-
-                    // Create enhanced popup HTML content
-                    const popupContent = `
-                        <div class="country-name">${countryName}</div>
-                        <div class="action-message">Plan your next adventure</div>
-                        <button class="popup-button" onclick="selectCountry('${countryName}')">Start Planning</button>
-                    `;
-
-                    // Create and add the popup
-                    activePopup = new mapboxgl.Popup({
-                        closeButton: true,
-                        closeOnClick: false
-                    })
-                    .setLngLat(e.lngLat)
-                    .setHTML(popupContent)
-                    .addTo(map);
-                }
-            });
-        });
-
-        // Function to handle country selection and Android communication
-        function selectCountry(countryName) {
-            console.log("Country selected: " + countryName);
-
-            try {
-                if (typeof AndroidInterface !== 'undefined') {
-                    AndroidInterface.onCountrySelected(countryName);
-                    console.log("Called AndroidInterface.onCountrySelected");
-
-                    // Close the popup after selection
-                    if (activePopup) {
-                        activePopup.remove();
-                    }
-                } else {
-                    console.error("AndroidInterface is not defined");
-                }
-            } catch (error) {
-                console.error("Error calling AndroidInterface: " + error);
+            // Add trip pins when map is ready
+            if (map.loaded()) {
+                addTripPinsToMap();
+            } else {
+                map.on('load', addTripPinsToMap);
             }
+        } catch (error) {
+            console.error("Error loading trip data:", error);
+        }
+    }
+
+    // Function to add trip pins to the map
+    function addTripPinsToMap() {
+        // Remove existing pins if any
+        if (map.getSource('trip-pins')) {
+            map.removeLayer('trip-pins-layer');
+            map.removeSource('trip-pins');
         }
 
-        // Auto-rotation functionality
-        let rotating = true; // Initial state is set to rotating
-        let lastTime = Date.now();
-
-        function rotateMap() {
-            if (rotating) {
-                const now = Date.now();
-                const deltaTime = (now - lastTime) / 1000; // time in seconds
-                let newBearing = map.getBearing() - deltaTime * 5; // rotate from right to left
-                map.setBearing(newBearing);
-                lastTime = now;
-            }
+        if (userTrips.length === 0) {
+            console.log("No trips to display");
+            return;
         }
 
-        // Listen for user interaction to stop rotation
-        map.on('mousedown', () => rotating = false);
-        map.on('touchstart', () => rotating = false);
-        map.on('mouseup', () => rotating = false);
-        map.on('touchend', () => rotating = false);
+        // Convert trips to GeoJSON format
+        const tripPoints = {
+            type: 'FeatureCollection',
+            features: userTrips.map(trip => {
+                // Use geocoding API to get coordinates based on country name
+                // For now, we'll use a simple mapping of some common countries
+                // In a production app, you would use a geocoder service
+                const coordinates = getCountryCoordinates(trip.country);
 
-        // Continuously rotate the map if no interaction
-        setInterval(rotateMap, 50); // Update every 50ms
-    </script>
+                return {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: coordinates
+                    },
+                    properties: {
+                        tripId: trip.tripId,
+                        tripName: trip.tripName,
+                        country: trip.country,
+                        journal: trip.journal,
+                        startDate: trip.startDate,
+                        endDate: trip.endDate,
+                        imageUrls: trip.imageUrls
+                    }
+                };
+            })
+        };
+
+        // Add source and layer for trip pins
+        map.addSource('trip-pins', {
+            type: 'geojson',
+            data: tripPoints
+        });
+
+        // Add a custom marker layer
+        tripPoints.features.forEach(feature => {
+            // Create a DOM element for the marker
+            const el = document.createElement('div');
+            el.className = 'trip-pin';
+
+            // Add the marker to the map
+            const marker = new mapboxgl.Marker(el)
+                .setLngLat(feature.geometry.coordinates)
+                .addTo(map);
+
+            // Add click event to the marker
+            el.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent the click from bubbling to the map
+                displayTripPopup(feature, feature.geometry.coordinates);
+            });
+        });
+    }
+
+    // Helper function to get country coordinates (simplified)
+    function getCountryCoordinates(countryName) {
+        // This is a simplified approach - in a real app, you would use a geocoding service
+        const countryCoordinates = {
+            "United States": [-98.5795, 39.8283],
+            "Canada": [-106.3468, 56.1304],
+            "Mexico": [-102.5528, 23.6345],
+            "Brazil": [-51.9253, -14.2350],
+            "United Kingdom": [-3.4360, 55.3781],
+            "France": [2.2137, 46.2276],
+            "Germany": [10.4515, 51.1657],
+            "Italy": [12.5674, 41.8719],
+            "Spain": [-3.7492, 40.4637],
+            "China": [104.1954, 35.8617],
+            "Japan": [138.2529, 36.2048],
+            "India": [78.9629, 20.5937],
+            "Australia": [133.7751, -25.2744],
+            "Russia": [105.3188, 61.5240],
+            "South Africa": [22.9375, -30.5595]
+        };
+
+        // If country is in our list, return its coordinates
+        if (countryCoordinates[countryName]) {
+            return countryCoordinates[countryName];
+        }
+
+        // If not found, return a slightly randomized position to avoid stacking
+        // This is a fallback for demo purposes
+        return [
+            (Math.random() * 360 - 180),
+            (Math.random() * 170 - 85)
+        ];
+    }
+
+    // Function to display trip popup
+    function displayTripPopup(feature, coordinates) {
+        // Close any previously active popup
+        if (activePopup) {
+            activePopup.remove();
+        }
+
+        const props = feature.properties;
+
+        // Format dates
+        let dateDisplay = "";
+        if (props.startDate && props.endDate) {
+            const startDate = new Date(props.startDate);
+            const endDate = new Date(props.endDate);
+            dateDisplay = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+        }
+
+        // Create journal preview (first 150 characters)
+        const journalPreview = props.journal ?
+            (props.journal.length > 150 ? props.journal.substring(0, 150) + "..." : props.journal) :
+            "No journal entry";
+
+        // Create popup HTML content
+        const popupContent = `
+            <div class="country-name">${props.country}</div>
+            <div class="journal-title">${props.tripName}</div>
+            <div class="journal-date">${dateDisplay}</div>
+            <div class="journal-preview">${journalPreview}</div>
+            <button class="popup-button" onclick="viewTripDetails('${props.tripId}')">View Journal</button>
+        `;
+
+        // Create and add the popup
+        activePopup = new mapboxgl.Popup({
+            closeButton: true,
+            closeOnClick: false
+        })
+        .setLngLat(coordinates)
+        .setHTML(popupContent)
+        .addTo(map);
+    }
+
+    // Function to handle viewing trip details
+    function viewTripDetails(tripId) {
+        console.log("View trip details for: " + tripId);
+
+        try {
+            if (typeof AndroidInterface !== 'undefined') {
+                AndroidInterface.onTripSelected(tripId);
+                console.log("Called AndroidInterface.onTripSelected");
+
+                // Close the popup after selection
+                if (activePopup) {
+                    activePopup.remove();
+                }
+            } else {
+                console.error("AndroidInterface is not defined");
+            }
+        } catch (error) {
+            console.error("Error calling AndroidInterface: " + error);
+        }
+    }
+
+    map.on('style.load', () => {
+        // Set the map background layer to transparent
+        if (map.getLayer('background')) {
+            map.setPaintProperty('background', 'background-color', 'rgba(0, 0, 0, 0)');
+        }
+
+        // Optional: Set fog to transparent if globe is visible
+        map.setFog({
+            "color": "rgba(0, 0, 0, 0)", // transparent globe
+            "high-color": "rgba(0, 0, 0, 0)",
+            "space-color": "rgba(0, 0, 0, 0)",
+            "star-intensity": 0.0
+        });
+
+        // Add country boundary layer
+        map.addSource('country-boundaries', {
+            type: 'vector',
+            url: 'mapbox://mapbox.country-boundaries-v1'
+        });
+
+        map.addLayer({
+            'id': 'country-boundaries',
+            'type': 'fill',
+            'source': 'country-boundaries',
+            'source-layer': 'country_boundaries',
+            'paint': {
+                'fill-color': 'rgba(0, 0, 0, 0)',
+                'fill-outline-color': 'rgba(0, 0, 0, 0)'
+            }
+        });
+
+        // Add hover effect
+        map.addLayer({
+            'id': 'country-boundaries-hover',
+            'type': 'fill',
+            'source': 'country-boundaries',
+            'source-layer': 'country_boundaries',
+            'paint': {
+                'fill-color': 'rgba(134, 204, 255, 0.3)',
+                'fill-outline-color': 'rgba(134, 204, 255, 0.8)'
+            },
+            'filter': ['==', 'iso_3166_1', '']
+        });
+
+        // Change cursor when hovering over a country
+        map.on('mousemove', 'country-boundaries', (e) => {
+            if (e.features.length > 0) {
+                map.getCanvas().style.cursor = 'pointer';
+
+                const countryCode = e.features[0].properties.iso_3166_1;
+                map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', countryCode]);
+            }
+        });
+
+        // Reset cursor when not hovering over a country
+        map.on('mouseleave', 'country-boundaries', () => {
+            map.getCanvas().style.cursor = '';
+            map.setFilter('country-boundaries-hover', ['==', 'iso_3166_1', '']);
+        });
+
+        // Handle click on a country (for adding trips)
+        map.on('click', 'country-boundaries', (e) => {
+            if (e.features.length > 0) {
+                const feature = e.features[0];
+                const countryName = feature.properties.name_en;
+
+                // Close any previously active popup
+                if (activePopup) {
+                    activePopup.remove();
+                }
+
+                // Create enhanced popup HTML content
+                const popupContent = `
+                    <div class="country-name">${countryName}</div>
+                    <div class="action-message">Plan your next adventure</div>
+                    <button class="popup-button" onclick="selectCountry('${countryName}')">Start Planning</button>
+                `;
+
+                // Create and add the popup
+                activePopup = new mapboxgl.Popup({
+                    closeButton: true,
+                    closeOnClick: false
+                })
+                .setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(map);
+            }
+        });
+
+        // Add trip pins if we already have data
+        if (userTrips.length > 0) {
+            addTripPinsToMap();
+        }
+    });
+
+    // Function to handle country selection and Android communication
+    function selectCountry(countryName) {
+        console.log("Country selected: " + countryName);
+
+        try {
+            if (typeof AndroidInterface !== 'undefined') {
+                AndroidInterface.onCountrySelected(countryName);
+                console.log("Called AndroidInterface.onCountrySelected");
+
+                // Close the popup after selection
+                if (activePopup) {
+                    activePopup.remove();
+                }
+            } else {
+                console.error("AndroidInterface is not defined");
+            }
+        } catch (error) {
+            console.error("Error calling AndroidInterface: " + error);
+        }
+    }
+
+    // Auto-rotation functionality
+    let rotating = true; // Initial state is set to rotating
+    let lastTime = Date.now();
+
+    function rotateMap() {
+        if (rotating) {
+            const now = Date.now();
+            const deltaTime = (now - lastTime) / 1000; // time in seconds
+            let newBearing = map.getBearing() - deltaTime * 5; // rotate from right to left
+            map.setBearing(newBearing);
+            lastTime = now;
+        }
+    }
+
+    // Listen for user interaction to stop rotation
+    map.on('mousedown', () => rotating = false);
+    map.on('touchstart', () => rotating = false);
+    map.on('mouseup', () => rotating = false);
+    map.on('touchend', () => rotating = false);
+
+    // Continuously rotate the map if no interaction
+    setInterval(rotateMap, 50); // Update every 50ms
+</script>
 </body>
 </html>
