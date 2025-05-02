@@ -236,13 +236,31 @@ public class SupabaseExplore {
                             trip.setJournal(tripObj.getString("journal"));
                         }
 
-                        // Parse dates - would need to convert string dates to Date objects
+                        // Parse dates
+                        if (!tripObj.isNull("start_date")) {
+                            String startDateStr = tripObj.getString("start_date");
+                            trip.setRawStartDate(startDateStr);
+
+                            // We'll convert the string to Date object in the activity
+                        }
+
+                        if (!tripObj.isNull("end_date")) {
+                            String endDateStr = tripObj.getString("end_date");
+                            trip.setRawEndDate(endDateStr);
+
+                            // We'll convert the string to Date object in the activity
+                        }
 
                         // Parse image URLs if they exist
                         if (!tripObj.isNull("image_url")) {
-                            JSONArray imageUrls = tripObj.getJSONArray("image_url");
-                            for (int j = 0; j < imageUrls.length(); j++) {
-                                trip.addImageUrl(imageUrls.getString(j));
+                            if (tripObj.get("image_url") instanceof JSONArray) {
+                                JSONArray imageUrls = tripObj.getJSONArray("image_url");
+                                for (int j = 0; j < imageUrls.length(); j++) {
+                                    trip.addImageUrl(imageUrls.getString(j));
+                                }
+                            } else if (tripObj.get("image_url") instanceof String) {
+                                // Handle case where image_url is a single string instead of array
+                                trip.addImageUrl(tripObj.getString("image_url"));
                             }
                         }
 
