@@ -4,25 +4,25 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.google.android.material.appbar.MaterialToolbar;
 
 public class HelpCenterFragment extends Fragment {
 
-    private MaterialToolbar toolbar;
+    private ImageView backButton;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_help_center, container, false);
 
-        // Initialize toolbar
-        toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+        // Initialize back button
+        backButton = view.findViewById(R.id.btn_back);
+        backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
         // Setup expandable FAQ items
         setupFaqItems(view);

@@ -82,9 +82,9 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Home option -->
+            <!-- Travel Summary option -->
             <LinearLayout
-                android:id="@+id/btn_home"
+                android:id="@+id/btn_travel_summary"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:orientation="horizontal"
@@ -95,16 +95,18 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_dashboard"
-                    android:contentDescription="Home icon"
+                    android:src="@drawable/ic_travel"
+                    android:contentDescription="Travel Summary icon"
                     app:tint="@color/text_primary"/>
 
-                <TextView
+                <Button
+                    android:id="@+id/btn_travel_summary_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Travel Dashboard"
-                    android:textSize="16sp"
+                    android:text="Travel Summary"
                     android:textColor="@color/text_primary"
+                    android:textAllCaps="false"
+                    android:background="@android:color/transparent"
                     android:layout_marginStart="16dp" />
             </LinearLayout>
 
@@ -131,14 +133,17 @@
                     android:contentDescription="Settings icon"
                     app:tint="@color/text_primary"/>
 
-                <TextView
+                <Button
+                    android:id="@+id/btn_settings_text"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Setting"
-                    android:textSize="16sp"
+                    android:text="Settings"
                     android:textColor="@color/text_primary"
+                    android:textAllCaps="false"
+                    android:background="@android:color/transparent"
                     android:layout_marginStart="16dp" />
             </LinearLayout>
+
             <!-- Divider -->
             <View
                 android:layout_width="match_parent"

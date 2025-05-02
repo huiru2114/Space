@@ -31,6 +31,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URL;
 
 public class AccountSettingsFragment extends Fragment {
 
@@ -46,6 +47,7 @@ public class AccountSettingsFragment extends Fragment {
     private Button updateProfileButton;
     private Button changePasswordButton;
     private ImageView profileImageView;
+    private ImageView backButton;
     private String base64Image = null;
 
     private SupabaseAuth auth;
@@ -70,6 +72,10 @@ public class AccountSettingsFragment extends Fragment {
         updateProfileButton = view.findViewById(R.id.update_profile_button);
         changePasswordButton = view.findViewById(R.id.change_password_button);
         profileImageView = view.findViewById(R.id.profile_image);
+        backButton = view.findViewById(R.id.btn_back);
+
+        // Set back button click listener
+        backButton.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
 
         // Set up profile image click listener
         profileImageView.setOnClickListener(v -> selectImage());
@@ -115,12 +121,52 @@ public class AccountSettingsFragment extends Fragment {
 
                     // Load profile picture if available
                     if (profilePic != null && !profilePic.isEmpty()) {
-                        // You would typically use an image loading library like Glide or Picasso here
-                        // For simplicity, we'll use a placeholder
-                        profileImageView.setImageResource(R.drawable.ic_account);
+                        // Check if it's a base64 image
+                        if (profilePic.startsWith("data:image") || profilePic.startsWith("/9j/")) {
+                            // Convert base64 to bitmap
+                            try {
+                                String base64Image = profilePic;
+                                // Remove data:image prefix if present
+                                if (base64Image.contains(",")) {
+                                    base64Image = base64Image.substring(base64Image.indexOf(",") + 1);
+                                }
+                                byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                profileImageView.setImageBitmap(bitmap);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error decoding base64 image", e);
+                                profileImageView.setImageResource(R.drawable.ic_account);
+                            }
+                        } else {
+                            // Assume it's a URL - in a real app, use Glide or Picasso
+                            try {
+                                // For demo purposes, we'll just use a placeholder
+                                // In production, you would use:
+                                // Glide.with(requireContext()).load(profilePic).placeholder(R.drawable.ic_account).into(profileImageView);
+                                profileImageView.setImageResource(R.drawable.ic_account);
 
-                        // In a real implementation, you would do something like:
-                        // Glide.with(requireContext()).load(profilePic).into(profileImageView);
+                                // Asynchronously load the image (simple implementation)
+                                new Thread(() -> {
+                                    try {
+                                        URL url = new URL(profilePic);
+                                        final Bitmap bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                                        if (getActivity() != null) {
+                                            getActivity().runOnUiThread(() -> {
+                                                profileImageView.setImageBitmap(bitmap);
+                                            });
+                                        }
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error loading image from URL", e);
+                                    }
+                                }).start();
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error setting image from URL", e);
+                                profileImageView.setImageResource(R.drawable.ic_account);
+                            }
+                        }
+                    } else {
+                        // No profile pic available, use default
+                        profileImageView.setImageResource(R.drawable.ic_account);
                     }
                 });
             }
@@ -322,7 +368,7 @@ public class AccountSettingsFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         // Re-enable the buttons
                         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
-                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(true);
+                        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(false);
 
                         // Show error message
                         if (messageView != null) {

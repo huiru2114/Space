@@ -381,4 +381,55 @@ public class SupabaseTrip {
             }
         });
     }
+
+    /**
+     * Delete a trip from Supabase
+     * @param tripId The ID of the trip to delete
+     * @param callback Callback to handle the response
+     */
+    public void deleteTrip(String tripId, TripCallback callback) {
+        executor.execute(() -> {
+            try {
+                String accessToken = auth.getAccessToken();
+                if (accessToken == null) {
+                    callback.onError("Not authenticated. Please log in.");
+                    return;
+                }
+
+                // Make the API call to delete trip
+                URL url = new URL(REST_URL + "/" + TRIPS_TABLE + "?trip_id=eq." + tripId);
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setRequestMethod("DELETE");
+                connection.setRequestProperty("apikey", API_KEY);
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                connection.setRequestProperty("Content-Type", "application/json");
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode >= 200 && responseCode < 300) {
+                    // Success
+                    callback.onSuccess("Trip deleted successfully");
+                } else {
+                    // Error deleting trip
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(connection.getErrorStream()));
+                    String line;
+                    StringBuilder response = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    String errorResponse = response.toString();
+                    Log.e(TAG, "Delete trip error: " + errorResponse);
+                    callback.onError("Failed to delete trip: " + errorResponse);
+                }
+
+                connection.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting trip: " + e.getMessage(), e);
+                callback.onError("Network error: " + e.getMessage());
+            }
+        });
+    }
 }

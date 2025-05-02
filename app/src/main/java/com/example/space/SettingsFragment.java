@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +26,7 @@ public class SettingsFragment extends Fragment {
     private Switch darkModeSwitch;
     private Switch notificationsSwitch;
     private TextView versionTextView;
+    private ImageView backButton;
 
     private SharedPreferences sharedPreferences;
 
@@ -45,6 +47,7 @@ public class SettingsFragment extends Fragment {
         darkModeSwitch = view.findViewById(R.id.switch_dark_mode);
         notificationsSwitch = view.findViewById(R.id.switch_notifications);
         versionTextView = view.findViewById(R.id.text_app_version);
+        backButton = view.findViewById(R.id.btn_back);
 
         // Set app version
         try {
@@ -68,6 +71,12 @@ public class SettingsFragment extends Fragment {
     }
 
     private void setupClickListeners() {
+        // Set back button click listener
+        backButton.setOnClickListener(v -> {
+            // Navigate back
+            requireActivity().getSupportFragmentManager().popBackStack();
+        });
+
         accountCard.setOnClickListener(v -> {
             // Navigate to account settings fragment
             AccountSettingsFragment accountFragment = new AccountSettingsFragment();

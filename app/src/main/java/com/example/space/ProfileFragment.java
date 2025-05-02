@@ -36,15 +36,17 @@ public class ProfileFragment extends Fragment {
     private static final int LOGIN_REQUEST_CODE = 1001;
 
     private TextView usernameTextView;
-    private View homeButton;
+
     private View settingsButton;
+    private View travelSummaryButton;
+
+    private Button settingsTextButton;
+    private Button travelSummaryTextButton;
     private ImageView profileImageView;
     private Button loginButton;
     private ProgressBar loadingIndicator;
     private SupabaseAuth supabaseAuth;
     private SharedPreferences prefs;
-
-
 
     @Nullable
     @Override
@@ -54,18 +56,17 @@ public class ProfileFragment extends Fragment {
         // Initialize SupabaseAuth
         supabaseAuth = new SupabaseAuth(requireContext());
 
-
         // Initialize views
         usernameTextView = view.findViewById(R.id.username_text);
-        homeButton = view.findViewById(R.id.btn_home);
         settingsButton = view.findViewById(R.id.btn_settings);
+        settingsTextButton = view.findViewById(R.id.btn_settings_text);
+        travelSummaryButton = view.findViewById(R.id.btn_travel_summary);
+        travelSummaryTextButton = view.findViewById(R.id.btn_travel_summary_text);
         profileImageView = view.findViewById(R.id.profile_image);
         loginButton = view.findViewById(R.id.btn_login);
         loadingIndicator = view.findViewById(R.id.loading_indicator);
 
         prefs = getActivity().getSharedPreferences("AuthPrefs", MODE_PRIVATE);
-
-
 
         // Initialize UI with default state
         displayAnonymousState();
@@ -74,14 +75,21 @@ public class ProfileFragment extends Fragment {
         validateSession();
 
         // Set click listeners
-        homeButton.setOnClickListener(v -> {
-            //xy
-            navigateToHomeDashboard();
+        settingsButton.setOnClickListener(v -> {
+            navigateToSettings();
         });
 
-        settingsButton.setOnClickListener(v -> {
-            //xy
+        settingsTextButton.setOnClickListener(v -> {
             navigateToSettings();
+        });
+
+        // Set click listeners for travel summary
+        travelSummaryButton.setOnClickListener(v -> {
+            navigateToTravelSummary();
+        });
+
+        travelSummaryTextButton.setOnClickListener(v -> {
+            navigateToTravelSummary();
         });
 
         // Set up login/logout button
@@ -101,16 +109,6 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
-
-    //xy
-    /**
-     * Navigate to the Home Dashboard fragment
-     */
-    private void navigateToHomeDashboard() {
-        HomeDashboardFragment homeDashboardFragment = new HomeDashboardFragment();
-        replaceFragment(homeDashboardFragment, "HomeDashboard");
-    }
-//xy
     /**
      * Navigate to the Settings fragment
      */
@@ -119,7 +117,14 @@ public class ProfileFragment extends Fragment {
         replaceFragment(settingsFragment, "Settings");
     }
 
-//xy
+    /**
+     * Navigate to the Travel Summary fragment
+     */
+    private void navigateToTravelSummary() {
+        TravelSummaryFragment travelSummaryFragment = new TravelSummaryFragment();
+        replaceFragment(travelSummaryFragment, "TravelSummary");
+    }
+
     /**
      * Helper method to replace the current fragment
      */
@@ -133,7 +138,7 @@ public class ProfileFragment extends Fragment {
             showToast("Error navigating. Please try again.");
         }
     }
-//xy
+
     /**
      * Helper method to show toast messages
      */
@@ -146,7 +151,6 @@ public class ProfileFragment extends Fragment {
         super.onResume();
         Log.d(TAG, "onResume: Checking login state");
         if (getActivity() != null) {
-
             validateSession();
         }
     }
@@ -389,4 +393,3 @@ public class ProfileFragment extends Fragment {
         }
     }
 }
-
