@@ -1,78 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="180dp"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="16dp"
+    android:layout_height="200dp"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="14dp"
     app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!-- Trip Image with gradient overlay -->
         <ImageView
             android:id="@+id/activity_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:contentDescription="Activity image"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:contentDescription="Trip cover image" />
 
-        <!-- Country flag and duration -->
+        <!-- Gradient Overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/gradient_overlay" />
+
+        <!-- Location with icon -->
         <LinearLayout
-            android:id="@+id/location_info"
+            android:id="@+id/location_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="#77000000"
-            android:padding="4dp"
-            android:layout_margin="8dp"
+            android:gravity="center_vertical"
+            android:layout_margin="16dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
             <ImageView
-                android:id="@+id/country_flag"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:src="@drawable/flag_my"
-                android:contentDescription="Country flag" />
+                android:src="@drawable/ic_location"
+                android:contentDescription="Location icon"
+                app:tint="@android:color/white" />
 
             <TextView
                 android:id="@+id/location_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Malaysia"
-                android:textSize="12sp"
+                android:text="Japan"
                 android:textColor="@android:color/white"
+                android:textSize="12sp"
                 android:layout_marginStart="4dp" />
         </LinearLayout>
 
-        <!-- Activity title background overlay -->
-        <View
-            android:id="@+id/title_background"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="#88000000"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <!-- Activity title -->
+        <!-- Trip Title -->
         <TextView
             android:id="@+id/activity_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="KL Unforgettable: Stories in the City"
-            android:textSize="14sp"
+            android:text="Tokyo Adventure"
             android:textColor="@android:color/white"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="@id/title_background"
-            app:layout_constraintStart_toStartOf="@id/title_background"
-            app:layout_constraintEnd_toEndOf="@id/title_background"
-            app:layout_constraintTop_toTopOf="@id/title_background" />
+            android:shadowColor="#80000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_margin="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Optional Badge for new trips -->
+        <TextView
+            android:id="@+id/badge_new"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NEW"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:background="@drawable/badge_background"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_margin="16dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+
+</com.google.android.material.card.MaterialCardView>
