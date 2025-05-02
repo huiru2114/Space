@@ -74,17 +74,20 @@
                 android:src="@drawable/ic_arrow_back"
                 app:tint="@android:color/white" />
 
-            <!-- Image indicator dots -->
+            <!-- UPDATED: Improved image indicator dots -->
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/image_tab_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
+                android:layout_width="wrap_content"
+                android:layout_height="8dp"
+                android:layout_gravity="bottom|center_horizontal"
                 android:layout_marginBottom="16dp"
                 android:background="@android:color/transparent"
                 app:tabBackground="@drawable/tab_selector"
                 app:tabGravity="center"
-                app:tabIndicatorHeight="0dp" />
+                app:tabIndicatorHeight="0dp"
+                app:tabMinWidth="8dp"
+                app:tabPaddingEnd="4dp"
+                app:tabPaddingStart="4dp" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
