@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="?attr/colorSurface">
 
     <!-- Top bar with back button and title -->
     <LinearLayout
@@ -21,6 +21,7 @@
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="?attr/colorOnSurface"
             android:contentDescription="Back button" />
 
         <TextView
@@ -32,7 +33,7 @@
             android:text="Country Name"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
     </LinearLayout>
 
@@ -53,7 +54,9 @@
             android:layout_weight="1"
             android:hint="Search trips..."
             android:padding="8dp"
-            android:background="@android:drawable/editbox_background"
+            android:background="?android:attr/editTextBackground"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?android:attr/textColorSecondary"
             android:inputType="text" />
 
         <ImageButton
@@ -62,6 +65,7 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_sort_by_size"
+            android:tint="?attr/colorOnSurface"
             android:contentDescription="Filter trips" />
 
     </LinearLayout>
@@ -83,6 +87,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:indeterminateTint="@color/colorAccent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

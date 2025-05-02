@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3498DB</color>
-    <color name="colorPrimaryDark">#2980B9</color>
-    <color name="colorAccent">#2196F3</color>
-    <color name="bottom_nav_background">#FFFFFF</color>
-    <color name="activity_card_background">#EEEEEE</color>
-    <color name="fab_background">#3498DB</color>
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="divider">#BDBDBD</color>
-    <color name="light_blue">#ADD8E6</color>
-    <color name="light_blue_background">#E6F4F9</color>
-    <color name="greyStatus">#808080</color>
-    <color name="splash_background">#F0F8FF</color>
+    <!-- Base dark theme colors -->
+    <color name="colorPrimary">#64B5F6</color>
+    <color name="colorPrimaryDark">#42A5F5</color>
+    <color name="colorAccent">#64B5F6</color>
+    <color name="bottom_nav_background">#121212</color>
+    <color name="activity_card_background">#1E1E1E</color>
+    <color name="fab_background">#64B5F6</color>
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="divider">#454545</color>
+    <color name="light_blue">#1565C0</color>
+    <color name="light_blue_background">#102027</color>
+    <color name="greyStatus">#757575</color>
+    <color name="splash_background">#121212</color>
     <color name="white">#FFFFFF</color>
-    <color name="background_color">#F9F9F9</color>
-    <color name="card_background">#FFFFFF</color>
+    <color name="background_color">#121212</color>
+    <color name="card_background">#1E1E1E</color>
 </resources>
