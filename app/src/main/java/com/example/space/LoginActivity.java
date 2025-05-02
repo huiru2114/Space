@@ -72,11 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> handleLogin());
         signupTextView.setOnClickListener(v -> navigateToSignup());
 
-        // Custom back button handler - fixed to ensure it always goes back to explore
-//        backButton.setOnClickListener(v -> {
-//            Log.d(TAG, "Back button clicked, fromExplore: " + fromExplore);
-//            navigateBack();
-//        });
+        backButton.setOnClickListener(v -> finish());
 
         // Show error message if provided
         if (errorMessage != null && !errorMessage.isEmpty()) {

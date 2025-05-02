@@ -237,7 +237,7 @@ public class HomeFragment extends Fragment {
                     }
                 });
             } else {
-                System.out.println("Cannot launch ViewTripActivity: getActivity() returned null");
+                System.out.println("Cannot launch TripDetailActivity: getActivity() returned null");
             }
         }
 
