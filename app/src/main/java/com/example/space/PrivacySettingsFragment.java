@@ -6,16 +6,16 @@ import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.google.android.material.appbar.MaterialToolbar;
 
 public class PrivacySettingsFragment extends Fragment {
 
-    private MaterialToolbar toolbar;
+    private ImageView backButton;
     private Switch locationSwitch;
     private Switch dataCollectionSwitch;
     private Switch personalizationSwitch;
@@ -30,13 +30,13 @@ public class PrivacySettingsFragment extends Fragment {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         // Initialize views
-        toolbar = view.findViewById(R.id.toolbar);
+        backButton = view.findViewById(R.id.btn_back);
         locationSwitch = view.findViewById(R.id.switch_location);
         dataCollectionSwitch = view.findViewById(R.id.switch_data_collection);
         personalizationSwitch = view.findViewById(R.id.switch_personalization);
 
-        // Set toolbar
-        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+        // Set back button click listener
+        backButton.setOnClickListener(v -> requireActivity().onBackPressed());
 
         // Load saved preferences
         boolean locationEnabled = sharedPreferences.getBoolean("privacy_location", false);

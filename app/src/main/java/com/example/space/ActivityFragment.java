@@ -199,9 +199,9 @@ public class ActivityFragment extends Fragment implements TripAdapter.OnTripClic
     // For backward compatibility - create sample activities
     private ActivityItem[] createSampleActivities() {
         return new ActivityItem[] {
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl),
-                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.city_kl)
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.ic_aeroplane),
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.ic_aeroplane),
+                new ActivityItem("KL Unforgettable: Stories in the City", R.drawable.ic_aeroplane)
         };
     }
 }
