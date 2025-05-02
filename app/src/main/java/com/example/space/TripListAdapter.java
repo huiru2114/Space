@@ -1,5 +1,6 @@
 package com.example.space;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -25,6 +26,7 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
     private List<Trip> trips;
     private Context context;
     private SimpleDateFormat dateFormat;
+    private static final int TRIP_DETAIL_REQUEST_CODE = 1001;
 
     public TripListAdapter(Context context) {
         this.context = context;
@@ -128,8 +130,14 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
                 intent.putStringArrayListExtra("image_urls", imageUrlList);
             }
 
-            // Start the trip detail activity
-            context.startActivity(intent);
+            // Start the trip detail activity FOR RESULT
+            // We need to cast context to Activity to use startActivityForResult
+            if (context instanceof Activity) {
+                ((Activity) context).startActivityForResult(intent, TRIP_DETAIL_REQUEST_CODE);
+            } else {
+                // Fallback to regular startActivity if context is not an Activity
+                context.startActivity(intent);
+            }
         });
     }
 

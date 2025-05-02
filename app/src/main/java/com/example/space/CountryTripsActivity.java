@@ -1,5 +1,6 @@
 package com.example.space;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,6 +34,7 @@ public class CountryTripsActivity extends AppCompatActivity {
     private SupabaseExplore supabaseExplore;
     private String selectedCountry;
     private List<Trip> allTrips = new ArrayList<>();
+    private static final int TRIP_DETAIL_REQUEST_CODE = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +79,29 @@ public class CountryTripsActivity extends AppCompatActivity {
 
         // Load trips for selected country
         loadTripsForCountry();
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == TRIP_DETAIL_REQUEST_CODE) {
+            // Refresh trips regardless of result code to ensure we have the latest data
+            // This covers both edits (RESULT_OK) and deletions (could be another result code)
+            android.util.Log.d("CountryTripsActivity", "Returned from TripDetailActivity, refreshing trips");
+            loadTripsForCountry();
+
+            if (resultCode == RESULT_OK && data != null) {
+                // Handle any specific data returned if needed
+                boolean wasUpdated = data.getBooleanExtra("trip_updated", false);
+                boolean wasDeleted = data.getBooleanExtra("trip_deleted", false);
+
+                if (wasUpdated) {
+                    Toast.makeText(this, "Trip updated successfully", Toast.LENGTH_SHORT).show();
+                } else if (wasDeleted) {
+                    Toast.makeText(this, "Trip deleted successfully", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
     }
 
     /**

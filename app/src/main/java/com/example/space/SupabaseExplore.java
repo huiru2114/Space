@@ -291,7 +291,6 @@ public class SupabaseExplore {
                             String startDateStr = tripObj.getString("start_date");
                             trip.setRawStartDate(startDateStr);
 
-                            // We'll convert the string to Date object in the activity
                         }
 
                         if (!tripObj.isNull("end_date")) {
