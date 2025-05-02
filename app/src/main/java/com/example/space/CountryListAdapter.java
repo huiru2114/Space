@@ -87,18 +87,120 @@ public class CountryListAdapter extends RecyclerView.Adapter<CountryListAdapter.
      * In a production app, you would get this from a real data source
      */
     private String getRegionForCountry(String country) {
-        // This is a simple placeholder - in a real app, you'd use a proper data source
         Map<String, String> regionMap = new HashMap<>();
-        regionMap.put("Malaysia", "Southeast Asia");
-        regionMap.put("Japan", "East Asia");
-        regionMap.put("France", "Western Europe");
-        regionMap.put("Germany", "Central Europe");
-        regionMap.put("United States", "North America");
-        regionMap.put("Brazil", "South America");
-        regionMap.put("Australia", "Oceania");
-        regionMap.put("South Africa", "Southern Africa");
 
-        return regionMap.getOrDefault(country, "");
+        // Southeast Asia
+        regionMap.put("Malaysia", "Southeast Asia");
+        regionMap.put("Indonesia", "Southeast Asia");
+        regionMap.put("Philippines", "Southeast Asia");
+        regionMap.put("Thailand", "Southeast Asia");
+        regionMap.put("Vietnam", "Southeast Asia");
+        regionMap.put("Singapore", "Southeast Asia");
+        regionMap.put("Myanmar", "Southeast Asia");
+
+        // East Asia
+        regionMap.put("Japan", "East Asia");
+        regionMap.put("South Korea", "East Asia");
+        regionMap.put("China", "East Asia");
+        regionMap.put("Taiwan", "East Asia");
+        regionMap.put("Mongolia", "East Asia");
+
+        // South Asia
+        regionMap.put("India", "South Asia");
+        regionMap.put("Pakistan", "South Asia");
+        regionMap.put("Bangladesh", "South Asia");
+        regionMap.put("Nepal", "South Asia");
+        regionMap.put("Sri Lanka", "South Asia");
+
+        // Middle East
+        regionMap.put("Saudi Arabia", "Middle East");
+        regionMap.put("United Arab Emirates", "Middle East");
+        regionMap.put("Iran", "Middle East");
+        regionMap.put("Iraq", "Middle East");
+        regionMap.put("Israel", "Middle East");
+        regionMap.put("Jordan", "Middle East");
+        regionMap.put("Turkey", "Middle East");
+
+        // Western Europe
+        regionMap.put("France", "Western Europe");
+        regionMap.put("Germany", "Western Europe");
+        regionMap.put("Belgium", "Western Europe");
+        regionMap.put("Netherlands", "Western Europe");
+        regionMap.put("Austria", "Western Europe");
+
+        // Southern Europe
+        regionMap.put("Italy", "Southern Europe");
+        regionMap.put("Spain", "Southern Europe");
+        regionMap.put("Portugal", "Southern Europe");
+        regionMap.put("Greece", "Southern Europe");
+
+        // Northern Europe
+        regionMap.put("United Kingdom", "Northern Europe");
+        regionMap.put("Ireland", "Northern Europe");
+        regionMap.put("Norway", "Northern Europe");
+        regionMap.put("Sweden", "Northern Europe");
+        regionMap.put("Denmark", "Northern Europe");
+        regionMap.put("Finland", "Northern Europe");
+
+        // Eastern Europe
+        regionMap.put("Poland", "Eastern Europe");
+        regionMap.put("Ukraine", "Eastern Europe");
+        regionMap.put("Russia", "Eastern Europe");
+        regionMap.put("Czech Republic", "Eastern Europe");
+        regionMap.put("Hungary", "Eastern Europe");
+
+        // North America
+        regionMap.put("United States", "North America");
+        regionMap.put("Canada", "North America");
+        regionMap.put("Mexico", "North America");
+
+        // Central America & Caribbean
+        regionMap.put("Cuba", "Caribbean");
+        regionMap.put("Jamaica", "Caribbean");
+        regionMap.put("Costa Rica", "Central America");
+        regionMap.put("Panama", "Central America");
+
+        // South America
+        regionMap.put("Brazil", "South America");
+        regionMap.put("Argentina", "South America");
+        regionMap.put("Chile", "South America");
+        regionMap.put("Colombia", "South America");
+        regionMap.put("Peru", "South America");
+
+        // Oceania
+        regionMap.put("Australia", "Oceania");
+        regionMap.put("New Zealand", "Oceania");
+        regionMap.put("Fiji", "Oceania");
+        regionMap.put("Papua New Guinea", "Oceania");
+
+        // North Africa
+        regionMap.put("Egypt", "North Africa");
+        regionMap.put("Algeria", "North Africa");
+        regionMap.put("Morocco", "North Africa");
+        regionMap.put("Tunisia", "North Africa");
+
+        // West Africa
+        regionMap.put("Nigeria", "West Africa");
+        regionMap.put("Ghana", "West Africa");
+        regionMap.put("Ivory Coast", "West Africa");
+        regionMap.put("Senegal", "West Africa");
+
+        // East Africa
+        regionMap.put("Kenya", "East Africa");
+        regionMap.put("Ethiopia", "East Africa");
+        regionMap.put("Tanzania", "East Africa");
+        regionMap.put("Uganda", "East Africa");
+
+        // Southern Africa
+        regionMap.put("South Africa", "Southern Africa");
+        regionMap.put("Namibia", "Southern Africa");
+        regionMap.put("Botswana", "Southern Africa");
+        regionMap.put("Zimbabwe", "Southern Africa");
+
+        // If not found, return "Welcome to <Country>"
+        return regionMap.containsKey(country)
+                ? regionMap.get(country)
+                : "Welcome to " + country;
     }
 
     /**
