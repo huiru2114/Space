@@ -17,6 +17,10 @@ public class Trip {
     private Date endDate;
     private List<String> imageUrls;
 
+    // Raw date strings from API for parsing(Explore page)
+    private String rawStartDate;
+    private String rawEndDate;
+
     // Default constructor
     public Trip() {
         this.imageUrls = new ArrayList<>();
@@ -92,6 +96,23 @@ public class Trip {
 
     public List<String> getImageUrls() {
         return imageUrls;
+    }
+
+    //for Explore page
+    public String getRawStartDate() {
+        return rawStartDate;
+    }
+
+    public void setRawStartDate(String rawStartDate) {
+        this.rawStartDate = rawStartDate;
+    }
+
+    public String getRawEndDate() {
+        return rawEndDate;
+    }
+
+    public void setRawEndDate(String rawEndDate) {
+        this.rawEndDate = rawEndDate;
     }
 
     public void setImageUrls(List<String> imageUrls) {

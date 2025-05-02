@@ -16,6 +16,7 @@ import com.bumptech.glide.Glide;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -28,7 +29,7 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
     public TripListAdapter(Context context) {
         this.context = context;
         this.trips = new ArrayList<>();
-        this.dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+        this.dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     }
 
     @NonNull
@@ -48,10 +49,18 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
 
         // Set date range if available
         if (trip.getStartDate() != null && trip.getEndDate() != null) {
-            String dateRange = dateFormat.format(trip.getStartDate()) +
-                    " - " +
-                    dateFormat.format(trip.getEndDate());
-            holder.tripDates.setText(dateRange);
+            // Check if start and end dates are the same
+            if (trip.getStartDate().equals(trip.getEndDate())) {
+                // Only show single date
+                holder.tripDates.setText(dateFormat.format(trip.getStartDate()));
+            } else {
+                // Show date range
+                String dateRange = dateFormat.format(trip.getStartDate()) +
+                        " - " +
+                        dateFormat.format(trip.getEndDate());
+                holder.tripDates.setText(dateRange);
+            }
+            holder.tripDates.setVisibility(View.VISIBLE);
         } else {
             holder.tripDates.setVisibility(View.GONE);
         }
