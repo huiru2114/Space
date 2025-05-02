@@ -9,7 +9,6 @@
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
     app:cardCornerRadius="12dp"
-    app:cardBackgroundColor="?attr/colorSurface"
     app:cardElevation="2dp">
 
     <RelativeLayout
@@ -24,15 +23,14 @@
             android:text="Country Name"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface" />
+            android:textColor="@android:color/black" />
 
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:src="@android:drawable/ic_menu_more"
-            app:tint="?attr/colorOnSurface" />
+            android:src="@android:drawable/ic_menu_more" />
 
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

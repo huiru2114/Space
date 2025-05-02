@@ -8,9 +8,8 @@
     android:layout_marginEnd="16dp"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="3dp"
-    app:cardBackgroundColor="?attr/colorSurface">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -23,11 +22,10 @@
             android:scaleType="centerCrop"
             android:contentDescription="Trip image" />
 
-        <!-- Gradient overlay for better text visibility -->
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/image_gradient" />
+            android:background="#66000000" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -43,11 +41,7 @@
                 android:text="Trip Name"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:shadowColor="#80000000"
-                android:shadowDx="1"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
+                android:textColor="@android:color/white" />
 
             <TextView
                 android:id="@+id/trip_dates"
@@ -55,11 +49,7 @@
                 android:layout_height="wrap_content"
                 android:text="01 Jan 2023 - 15 Jan 2023"
                 android:textSize="14sp"
-                android:textColor="@android:color/white"
-                android:shadowColor="#80000000"
-                android:shadowDx="1"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
+                android:textColor="@android:color/white" />
 
         </LinearLayout>
 
