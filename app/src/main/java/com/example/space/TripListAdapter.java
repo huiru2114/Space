@@ -1,6 +1,7 @@
 package com.example.space;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -80,8 +81,38 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
 
         // Set click listener - can be used to navigate to trip details
         holder.cardView.setOnClickListener(v -> {
-            // Intent to trip details activity would go here
-            Toast.makeText(context, "Trip: " + trip.getTripName(), Toast.LENGTH_SHORT).show();
+            // Create intent to navigate to trip details
+            Intent intent = new Intent(context, TripDetailActivity.class);
+
+            // Pass trip details to the detail activity
+            intent.putExtra("trip_id", trip.getTripId()); // Assuming Trip class has getId method
+            intent.putExtra("trip_name", trip.getTripName());
+            intent.putExtra("country", trip.getCountry());
+            intent.putExtra("journal", trip.getJournal());
+
+            // Format dates to strings if they exist
+            if (trip.getStartDate() != null) {
+                SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                intent.putExtra("start_date", apiFormat.format(trip.getStartDate()));
+            } else if (trip.getRawStartDate() != null) {
+                intent.putExtra("start_date", trip.getRawStartDate());
+            }
+
+            if (trip.getEndDate() != null) {
+                SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                intent.putExtra("end_date", apiFormat.format(trip.getEndDate()));
+            } else if (trip.getRawEndDate() != null) {
+                intent.putExtra("end_date", trip.getRawEndDate());
+            }
+
+            // Add image URLs if available
+            if (trip.getImageUrls() != null && !trip.getImageUrls().isEmpty()) {
+                ArrayList<String> imageUrlList = new ArrayList<>(trip.getImageUrls());
+                intent.putStringArrayListExtra("image_urls", imageUrlList);
+            }
+
+            // Start the trip detail activity
+            context.startActivity(intent);
         });
     }
 

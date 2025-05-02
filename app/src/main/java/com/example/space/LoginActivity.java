@@ -31,13 +31,31 @@ public class LoginActivity extends AppCompatActivity {
     private SupabaseAuth supabaseAuth;
     private SharedPreferences prefs;
 
+    // Flag to track if we came from Explore fragment
+    private boolean fromExplore = false;
+    // Error message passed from Explore fragment
+    private String errorMessage = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Add debug log to confirm activity creation
+        Log.d(TAG, "LoginActivity onCreate called");
+
         supabaseAuth = new SupabaseAuth(this);
         prefs = getSharedPreferences("AuthPrefs", MODE_PRIVATE);
+
+        // Get intent extras
+        Intent intent = getIntent();
+        if (intent != null) {
+            fromExplore = intent.getBooleanExtra("from_explore", false);
+            errorMessage = intent.getStringExtra("error_message");
+
+            // Add debug log
+            Log.d(TAG, "fromExplore: " + fromExplore + ", errorMessage: " + errorMessage);
+        }
 
         // Initialize views
         emailEditText = findViewById(R.id.et_username);
@@ -53,7 +71,45 @@ public class LoginActivity extends AppCompatActivity {
         // Set listeners
         loginButton.setOnClickListener(v -> handleLogin());
         signupTextView.setOnClickListener(v -> navigateToSignup());
-        backButton.setOnClickListener(v -> finish());
+
+        // Custom back button handler - fixed to ensure it always goes back to explore
+        backButton.setOnClickListener(v -> {
+            Log.d(TAG, "Back button clicked, fromExplore: " + fromExplore);
+            navigateBack();
+        });
+
+        // Show error message if provided
+        if (errorMessage != null && !errorMessage.isEmpty()) {
+            Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+//    @Override
+//    public void onBackPressed() {
+//        Log.d(TAG, "System back pressed, fromExplore: " + fromExplore);
+//        navigateBack();
+//    }
+
+    // Method to handle both custom back button and system back button
+    private void navigateBack() {
+        Log.d(TAG, "navigateBack called, fromExplore: " + fromExplore);
+        if (fromExplore) {
+            // If we came from explore, send back a result with auth_required=true
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("auth_required", true);
+            setResult(RESULT_CANCELED, resultIntent);
+
+            // Log the result being set
+            Log.d(TAG, "Setting result CANCELED with auth_required=true");
+
+            finish();
+
+            // Add a slide transition to make it visually clear we're going back
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+        } else {
+            // Regular finish for normal back navigation
+            finish();
+        }
     }
 
     // Navigate to login screen after email confirmation
@@ -97,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         showLoading(false);
                         Toast.makeText(LoginActivity.this, "Login successful but user ID is missing", Toast.LENGTH_SHORT).show();
-                        finish();
+                        handleSuccessfulLogin();
                     });
                 }
             }
@@ -123,7 +179,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     runOnUiThread(() -> {
                         Toast.makeText(LoginActivity.this, "Welcome back, " + username + "!", Toast.LENGTH_SHORT).show();
-                        finish();
+                        handleSuccessfulLogin();
                     });
                 }
             }
@@ -137,10 +193,26 @@ public class LoginActivity extends AppCompatActivity {
             public void onError(String error) {
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Error checking profile: " + error, Toast.LENGTH_SHORT).show();
-                    finish();
+                    handleSuccessfulLogin();
                 });
             }
         });
+    }
+
+    // Handle successful login with proper navigation
+    private void handleSuccessfulLogin() {
+        showLoading(false);
+
+        if (fromExplore) {
+            // If we came from Explore, just set result and finish so it can reload
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("login_successful", true);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+        } else {
+            // Regular finish for normal login flow
+            finish();
+        }
     }
 
     // Create profile for the user if none exists
@@ -149,7 +221,7 @@ public class LoginActivity extends AppCompatActivity {
         if (currentEmail == null) {
             runOnUiThread(() -> {
                 Toast.makeText(this, "Error: User email not found", Toast.LENGTH_SHORT).show();
-                finish();
+                handleSuccessfulLogin();
             });
             return;
         }
@@ -162,7 +234,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onSuccess(String message) {
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Profile created successfully!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    handleSuccessfulLogin();
                 });
             }
 
@@ -170,7 +242,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onError(String error) {
                 runOnUiThread(() -> {
                     Toast.makeText(LoginActivity.this, "Error creating profile: " + error, Toast.LENGTH_SHORT).show();
-                    finish();
+                    handleSuccessfulLogin();
                 });
             }
         });
