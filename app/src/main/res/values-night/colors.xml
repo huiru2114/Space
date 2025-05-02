@@ -12,4 +12,5 @@
     <color name="light_blue">#26C6DA</color>
     <color name="light_blue_background">#121C22</color>
     <color name="card_background">#1E2A34</color>
+    <color name="explore_white">@android:color/transparent</color>
 </resources>
