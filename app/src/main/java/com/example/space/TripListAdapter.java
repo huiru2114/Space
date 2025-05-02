@@ -72,11 +72,11 @@ public class TripListAdapter extends RecyclerView.Adapter<TripListAdapter.TripVi
             Glide.with(context)
                     .load(firstImageUrl)
                     .centerCrop()
-                    .placeholder(R.drawable.ic_unknown) // Replace with proper placeholder
+                    .placeholder(R.drawable.ic_pic_unknown)
                     .into(holder.tripImage);
         } else {
             // Set default image or hide image view
-            holder.tripImage.setImageResource(R.drawable.ic_unknown); // Replace with default image
+            holder.tripImage.setImageResource(R.drawable.ic_pic_unknown);
         }
 
         // Set click listener - can be used to navigate to trip details
