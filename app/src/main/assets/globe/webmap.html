@@ -155,6 +155,7 @@
         }
     }
 
+    // ✅ Modified: add pin offset if multiple trips in same country
     async function addTripPinsToMap() {
         if (map.getSource('trip-pins')) {
             map.removeLayer('trip-pins-layer');
@@ -166,8 +167,22 @@
             return;
         }
 
+        const offsetMap = {}; // Track how many times each country appears
+
         for (const trip of userTrips) {
-            const coordinates = await getCountryCoordinates(trip.country);
+            let coordinates = await getCountryCoordinates(trip.country);
+
+            // Apply offset if needed
+            const key = trip.country;
+            const offsetIndex = offsetMap[key] || 0;
+            offsetMap[key] = offsetIndex + 1;
+
+            const offset = 0.2 * offsetIndex;
+            coordinates = [
+                coordinates[0] + offset,
+                coordinates[1] + offset
+            ];
+
             const el = document.createElement('div');
             el.className = 'trip-pin';
 
@@ -182,7 +197,6 @@
         }
     }
 
-    // ✅ REPLACED FUNCTION: now uses Mapbox Geocoding API
     async function getCountryCoordinates(countryName) {
         const accessToken = mapboxgl.accessToken;
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(countryName)}.json?access_token=${accessToken}&limit=1`;
@@ -192,7 +206,7 @@
             const data = await response.json();
 
             if (data.features && data.features.length > 0) {
-                return data.features[0].center; // [lng, lat]
+                return data.features[0].center;
             }
         } catch (error) {
             console.error("Geocoding error:", error);
