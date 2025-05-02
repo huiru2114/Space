@@ -1,25 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Primary colors -->
-    <color name="colorPrimary">#26C6DA</color>          <!-- Keeping your teal-blue -->
-    <color name="colorPrimaryDark">#00ACC1</color>      <!-- Slightly darker teal -->
-    <color name="colorAccent">#4DD0E1</color>           <!-- Lighter teal accent -->
-
-    <!-- UI Background colors -->
-    <color name="bottom_nav_background">#0A1017</color> <!-- Darker than main background -->
-    <color name="activity_card_background">#1E2A34</color> <!-- Slightly lighter card backgrounds -->
-    <color name="fab_background">#26C6DA</color>        <!-- Using your light_blue for FAB -->
-
-    <!-- Text colors -->
-    <color name="text_primary">#FFFFFF</color>          <!-- White text -->
-    <color name="text_secondary">#B3FFFFFF</color>      <!-- 70% white for secondary text -->
-    <color name="divider">#3DFFFFFF</color>             <!-- 24% white for dividers -->
-
-    <!-- Feature colors - keeping your favorites unchanged -->
-    <color name="light_blue">#26C6DA</color>            <!-- Your beautiful teal-blue -->
-    <color name="light_blue_background">#121C22</color> <!-- Your dark blue background -->
+    <color name="colorPrimary">#26C6DA</color>
+    <color name="colorPrimaryDark">#00ACC1</color>
+    <color name="colorAccent">#4DD0E1</color>
+    <color name="bottom_nav_background">#0A1017</color>
+    <color name="activity_card_background">#1E2A34</color>
+    <color name="fab_background">#26C6DA</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
+    <color name="divider">#3DFFFFFF</color>
+    <color name="light_blue">#26C6DA</color>
+    <color name="light_blue_background">#121C22</color>
+    <color name="card_background">#1E2A34</color>
     <color name="explore_white">@android:color/transparent</color>
-    <!-- Additional accent colors -->
-    <color name="card_stroke">#263238</color>           <!-- Card stroke color in blue family -->
-    <color name="input_background">#172126</color>      <!-- Slightly lighter than background for input fields -->
 </resources>

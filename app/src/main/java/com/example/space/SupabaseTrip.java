@@ -383,6 +383,81 @@ public class SupabaseTrip {
     }
 
     /**
+     * Delete an image from Supabase storage
+     * @param imageUrl The URL of the image to delete
+     * @param callback Callback to handle the response
+     */
+    public void deleteImage(String imageUrl, TripCallback callback) {
+        executor.execute(() -> {
+            try {
+                String accessToken = auth.getAccessToken();
+                if (accessToken == null) {
+                    callback.onError("Not authenticated. Please log in.");
+                    return;
+                }
+
+                // Extract the filename from the URL
+                String filename = null;
+                try {
+                    // Extract the filename - it's the last part of the URL after the bucket name
+                    if (imageUrl.contains(TRIP_IMAGES_BUCKET)) {
+                        String[] parts = imageUrl.split(TRIP_IMAGES_BUCKET + "/");
+                        if (parts.length > 1) {
+                            filename = parts[1];
+                        }
+                    }
+
+                    if (filename == null) {
+                        callback.onError("Invalid image URL format");
+                        return;
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Error extracting filename from URL: " + e.getMessage());
+                    callback.onError("Cannot extract filename from URL: " + e.getMessage());
+                    return;
+                }
+
+                Log.d(TAG, "Deleting image: " + filename);
+
+                // Make the API call to delete the image
+                URL url = new URL(STORAGE_URL + "/object/" + TRIP_IMAGES_BUCKET + "/" + filename);
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setRequestMethod("DELETE");
+                connection.setRequestProperty("apikey", API_KEY);
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode >= 200 && responseCode < 300) {
+                    // Success
+                    Log.d(TAG, "Image deleted successfully: " + filename);
+                    callback.onSuccess("Image deleted successfully");
+                } else {
+                    // Error deleting image
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(connection.getErrorStream()));
+                    String line;
+                    StringBuilder response = new StringBuilder();
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    String errorResponse = response.toString();
+                    Log.e(TAG, "Delete image error: " + errorResponse);
+                    callback.onError("Failed to delete image: " + errorResponse);
+                }
+
+                connection.disconnect();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting image: " + e.getMessage(), e);
+                callback.onError("Network error: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
      * Delete a trip from Supabase
      * @param tripId The ID of the trip to delete
      * @param callback Callback to handle the response
