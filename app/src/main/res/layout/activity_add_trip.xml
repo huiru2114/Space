@@ -94,7 +94,7 @@
                     android:textColor="@color/white"
                     app:backgroundTint="@color/colorPrimary" />
 
-                <!-- Add horizontal ScrollView for image thumbnails with improved styling -->
+                <!-- Improved HorizontalScrollView for image thumbnails -->
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -107,9 +107,11 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingVertical="4dp"/>
+                        android:paddingVertical="4dp"
+                        android:spacing="8dp" />
                 </HorizontalScrollView>
 
+                <!-- Image upload progress indicators -->
                 <ProgressBar
                     android:id="@+id/progress_bar"
                     android:layout_width="match_parent"
@@ -132,7 +134,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Trip details card with improved design -->
+        <!-- Trip dates card with improved design -->
         <androidx.cardview.widget.CardView
             android:id="@+id/trip_dates_card"
             android:layout_width="match_parent"
@@ -232,6 +234,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Rest of the original layout remains unchanged -->
         <!-- Trip name card with improved design -->
         <androidx.cardview.widget.CardView
             android:id="@+id/trip_name_card"

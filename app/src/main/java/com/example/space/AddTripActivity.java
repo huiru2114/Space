@@ -3,14 +3,17 @@ package com.example.space;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -58,6 +61,7 @@ public class AddTripActivity extends AppCompatActivity {
     private final Calendar calendar = Calendar.getInstance();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy", Locale.getDefault());
     private List<String> uploadedImageUrls = new ArrayList<>();
+    private List<View> imageViewContainers = new ArrayList<>();  // Track image containers for deletion
     private SupabaseTrip supabaseTrip;
     private int totalImagesToUpload = 0;
     private int imagesUploaded = 0;
@@ -186,14 +190,23 @@ public class AddTripActivity extends AppCompatActivity {
                 if (imageUrls != null && !imageUrls.isEmpty()) {
                     uploadedImageUrls.addAll(imageUrls);
 
-                    // Display placeholder thumbnails
+                    // Display placeholders for existing images
                     for (int i = 0; i < imageUrls.size(); i++) {
+                        String imageUrl = imageUrls.get(i);
+
+                        // Create placeholder thumbnail with delete button
                         ImageView thumbnail = new ImageView(this);
                         thumbnail.setLayoutParams(new LinearLayout.LayoutParams(200, 200));
                         thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
                         thumbnail.setImageResource(R.drawable.ic_calendar);
                         thumbnail.setPadding(8, 8, 8, 8);
-                        uploadedImagesContainer.addView(thumbnail);
+
+                        Bitmap bitmap = ((BitmapDrawable) thumbnail.getDrawable()).getBitmap();
+
+                        // Create container with delete button for this image
+                        View container = createImageContainerWithDeleteButton(bitmap, imageUrl, i);
+                        uploadedImagesContainer.addView(container);
+                        imageViewContainers.add(container);
                     }
 
                     // Update button text
@@ -377,6 +390,9 @@ public class AddTripActivity extends AppCompatActivity {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
             byte[] imageData = baos.toByteArray();
 
+            // Show temporary placeholder while uploading
+            final View tempContainer = addImageThumbnail(bitmap, null);
+
             // Upload the image to Supabase storage
             supabaseTrip.uploadTripImage(imageData, new SupabaseTrip.TripCallback() {
                 @Override
@@ -385,8 +401,11 @@ public class AddTripActivity extends AppCompatActivity {
                         // Add URL to our list
                         uploadedImageUrls.add(imageUrl);
 
-                        // Display the uploaded image as a thumbnail
-                        addImageThumbnail(bitmap);
+                        // Remove temporary container
+                        uploadedImagesContainer.removeView(tempContainer);
+
+                        // Add the final version with delete button
+                        addImageThumbnailWithDeleteButton(bitmap, imageUrl);
 
                         progressBar.setVisibility(View.GONE);
                         Toast.makeText(AddTripActivity.this, "Image uploaded successfully", Toast.LENGTH_SHORT).show();
@@ -396,6 +415,9 @@ public class AddTripActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
+                        // Remove temporary placeholder on error
+                        uploadedImagesContainer.removeView(tempContainer);
+
                         progressBar.setVisibility(View.GONE);
                         Toast.makeText(AddTripActivity.this, "Error uploading image: " + error, Toast.LENGTH_SHORT).show();
                     });
@@ -414,8 +436,8 @@ public class AddTripActivity extends AppCompatActivity {
             // Convert Uri to byte array
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
 
-            // Display the thumbnail immediately
-            addImageThumbnail(bitmap);
+            // Add a temporary thumbnail
+            final View tempContainer = addImageThumbnail(bitmap, null);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
@@ -432,6 +454,12 @@ public class AddTripActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         // Add URL to our list
                         uploadedImageUrls.add(imageUrl);
+
+                        // Remove temporary placeholder
+                        uploadedImagesContainer.removeView(tempContainer);
+
+                        // Add final thumbnail with delete button
+                        addImageThumbnailWithDeleteButton(bitmap, imageUrl);
 
                         // Update progress
                         imagesUploaded++;
@@ -459,6 +487,9 @@ public class AddTripActivity extends AppCompatActivity {
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
+                        // Remove temporary placeholder on error
+                        uploadedImagesContainer.removeView(tempContainer);
+
                         // Update progress even on error
                         imagesUploaded++;
                         progressBar.setProgress(imagesUploaded);
@@ -500,18 +531,84 @@ public class AddTripActivity extends AppCompatActivity {
         }
     }
 
-    private void addImageThumbnail(Bitmap bitmap) {
-        // Create an ImageView for the thumbnail
-        ImageView thumbnail = new ImageView(this);
-        thumbnail.setLayoutParams(new LinearLayout.LayoutParams(200, 200));
-        thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    /**
+     * Creates a temporary thumbnail without delete button
+     * Used for showing placeholders while uploading
+     */
+    private View addImageThumbnail(Bitmap bitmap, String imageUrl) {
+        // Inflate the image thumbnail layout but hide the delete button
+        View container = getLayoutInflater().inflate(R.layout.image_thumbnail_with_delete, null);
+
+        // Get and configure the ImageView
+        ImageView thumbnail = container.findViewById(R.id.image_thumbnail);
         thumbnail.setImageBitmap(bitmap);
-        thumbnail.setPadding(8, 8, 8, 8);
+
+        // Hide the delete button for temporary thumbnails
+        ImageButton deleteButton = container.findViewById(R.id.btn_delete_image);
+        deleteButton.setVisibility(View.GONE);
 
         // Add it to the container
-        uploadedImagesContainer.addView(thumbnail);
+        uploadedImagesContainer.addView(container);
 
         // Update UI to show that we have images
         addPhotosButton.setText("Add More Photos");
+
+        return container;
+    }
+    /**
+     * Adds a thumbnail with delete button after successful upload
+     */
+    private void addImageThumbnailWithDeleteButton(Bitmap bitmap, String imageUrl) {
+        // Create and add container with delete button
+        View container = createImageContainerWithDeleteButton(bitmap, imageUrl, uploadedImageUrls.indexOf(imageUrl));
+        uploadedImagesContainer.addView(container);
+        imageViewContainers.add(container);
+
+        // Update UI to show that we have images
+        addPhotosButton.setText("Add More Photos");
+    }
+
+
+    /**
+     * Creates a container with image and delete button using the new layout
+     */
+    private View createImageContainerWithDeleteButton(Bitmap bitmap, final String imageUrl, final int position) {
+        // Inflate the image thumbnail layout
+        View container = getLayoutInflater().inflate(R.layout.image_thumbnail_with_delete, null);
+
+        // Get the ImageView from the inflated layout
+        ImageView thumbnail = container.findViewById(R.id.image_thumbnail);
+
+        // Set the bitmap to the ImageView
+        if (bitmap != null) {
+            thumbnail.setImageBitmap(bitmap);
+        } else {
+            // Use a placeholder if no bitmap is provided (for existing images when editing)
+            thumbnail.setImageResource(R.drawable.ic_calendar);
+        }
+
+        // Get the delete button from the inflated layout
+        ImageButton deleteButton = container.findViewById(R.id.btn_delete_image);
+
+        // Set click listener for the delete button
+        deleteButton.setOnClickListener(v -> {
+            // Remove image URL from list
+            if (imageUrl != null && uploadedImageUrls.contains(imageUrl)) {
+                uploadedImageUrls.remove(imageUrl);
+            }
+
+            // Remove the image container from the UI
+            uploadedImagesContainer.removeView(container);
+            imageViewContainers.remove(container);
+
+
+            // Update button text if no images left
+            if (uploadedImageUrls.isEmpty()) {
+                addPhotosButton.setText("Add Photos");
+            }
+        });
+
+
+        return container;
     }
 }

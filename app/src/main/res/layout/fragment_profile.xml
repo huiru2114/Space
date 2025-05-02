@@ -90,7 +90,8 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                android:paddingEnd="16dp"
+                android:background="@color/card_background">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -124,7 +125,8 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                android:paddingEnd="16dp"
+                android:background="@color/card_background">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -158,7 +160,8 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp">
+                android:paddingEnd="16dp"
+                android:background="@color/card_background">
 
                 <ImageView
                     android:layout_width="24dp"
