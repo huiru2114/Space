@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -257,7 +258,25 @@ public class HomeFragment extends Fragment implements AuthStateManager.AuthState
                     if (selectedTrip != null) {
                         // Launch ViewTripActivity with the selected trip
                         Intent intent = new Intent(getActivity(), TripDetailActivity.class);
-                        intent.putExtra("trip_id", tripId);
+                        // Pass all necessary trip details to the detail activity
+                        intent.putExtra("trip_id", selectedTrip.getTripId());
+                        intent.putExtra("trip_name", selectedTrip.getTripName());
+                        intent.putExtra("country", selectedTrip.getCountry());
+                        intent.putExtra("journal", selectedTrip.getJournal());
+
+                        // Format dates for the intent
+                        SimpleDateFormat sqlDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                        if (selectedTrip.getStartDate() != null) {
+                            intent.putExtra("start_date", sqlDateFormat.format(selectedTrip.getStartDate()));
+                        }
+                        if (selectedTrip.getEndDate() != null) {
+                            intent.putExtra("end_date", sqlDateFormat.format(selectedTrip.getEndDate()));
+                        }
+
+                        // Convert image URLs list to ArrayList for the intent
+                        ArrayList<String> imageUrlsList = new ArrayList<>(selectedTrip.getImageUrls());
+                        intent.putStringArrayListExtra("image_urls", imageUrlsList);
+
                         startActivity(intent);
                     } else {
                         System.out.println("Trip not found with ID: " + tripId);
