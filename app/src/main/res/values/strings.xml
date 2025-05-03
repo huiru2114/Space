@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Space</string>
+    <string name="app_name">Memory Globe</string>
 
     <!-- Supabase credentials - Replace with your actual values -->
     <string name="SUPABASE_URL">https://lqmentgdcdehfywyhwym.supabase.co</string>
