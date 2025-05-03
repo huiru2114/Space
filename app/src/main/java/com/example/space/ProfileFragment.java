@@ -97,7 +97,8 @@ public class ProfileFragment extends Fragment {
             if (supabaseAuth.getAccessToken() != null) {
                 // User is logged in, perform logout
                 supabaseAuth.signOut();
-                displayAnonymousState();
+                // Note: No need to manually call displayAnonymousState() here
+                // The AuthStateManager will notify all listeners and UI will update automatically
                 Toast.makeText(getActivity(), "Logged out successfully", Toast.LENGTH_SHORT).show();
             } else {
                 // User is not logged in, navigate to login activity
@@ -105,7 +106,6 @@ public class ProfileFragment extends Fragment {
                 startActivityForResult(intent, LOGIN_REQUEST_CODE);
             }
         });
-
         return view;
     }
 

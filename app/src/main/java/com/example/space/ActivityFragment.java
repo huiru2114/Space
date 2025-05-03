@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class ActivityFragment extends Fragment implements TripAdapter.OnTripClickListener {
+public class ActivityFragment extends Fragment implements TripAdapter.OnTripClickListener, AuthStateManager.AuthStateListener {
 
     private RecyclerView recyclerView;
     private TripAdapter adapter;
@@ -34,6 +34,8 @@ public class ActivityFragment extends Fragment implements TripAdapter.OnTripClic
     private SwipeRefreshLayout swipeRefreshLayout;
     private SupabaseTrip supabaseTrip;
     private List<Trip> tripList = new ArrayList<>();
+    private TextView activityTitle;
+    private TextView activitySubtitle;
 
     // Keep the original ActivityItem class to maintain compatibility
     public static class ActivityItem {
@@ -58,6 +60,10 @@ public class ActivityFragment extends Fragment implements TripAdapter.OnTripClic
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_activity, container, false);
+
+        // Initialize title/subtitle views
+        activityTitle = view.findViewById(R.id.activity_title);
+        activitySubtitle = view.findViewById(R.id.activity_subtitle);
 
         // Initialize views
         recyclerView = view.findViewById(R.id.activity_recycler_view);
@@ -100,11 +106,57 @@ public class ActivityFragment extends Fragment implements TripAdapter.OnTripClic
     @Override
     public void onResume() {
         super.onResume();
-        // Load trips when fragment becomes visible
-        loadTrips();
+        // Register for auth state changes
+        AuthStateManager.getInstance().addListener(this);
+
+        // No need to call loadTrips() here as it will be called by the addListener callback
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Unregister to prevent memory leaks
+        AuthStateManager.getInstance().removeListener(this);
+    }
+
+    @Override
+    public void onAuthStateChanged(boolean isAuthenticated) {
+        if (getActivity() == null) return;
+
+        getActivity().runOnUiThread(() -> {
+            if (isAuthenticated) {
+                // User is authenticated, show "MY TRIPS" UI
+                activityTitle.setText("MY TRIPS");
+                activitySubtitle.setVisibility(View.VISIBLE);
+                addButton.setVisibility(View.VISIBLE);
+                loadTrips();
+            } else {
+                // User is not authenticated, show generic UI
+                activityTitle.setText("TRIPS");
+                activitySubtitle.setVisibility(View.GONE);
+                addButton.setVisibility(View.GONE);
+                tripList.clear();
+                adapter.notifyDataSetChanged();
+
+                if (emptyStateTextView != null) {
+                    emptyStateTextView.setText("Please log in to view your trips");
+                    emptyStateTextView.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
     private void loadTrips() {
+        // Check authentication state first
+        if (!AuthStateManager.getInstance().isAuthenticated()) {
+            // Not authenticated, don't try to load trips
+            if (emptyStateTextView != null) {
+                emptyStateTextView.setText("Please log in to view your trips");
+                emptyStateTextView.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+
         // Show progress bar if available
         if (progressBar != null) {
             progressBar.setVisibility(View.VISIBLE);
@@ -138,6 +190,7 @@ public class ActivityFragment extends Fragment implements TripAdapter.OnTripClic
                     // Show empty state if no trips and view is available
                     if (emptyStateTextView != null) {
                         if (trips.isEmpty()) {
+                            emptyStateTextView.setText("No trips found.\nAdd your first trip by clicking the + button.");
                             emptyStateTextView.setVisibility(View.VISIBLE);
                         } else {
                             emptyStateTextView.setVisibility(View.GONE);

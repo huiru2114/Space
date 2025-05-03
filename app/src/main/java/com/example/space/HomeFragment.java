@@ -21,11 +21,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements AuthStateManager.AuthStateListener {
 
     private LottieAnimationView animationBackground;
     private WebView cesiumWebView;
@@ -50,8 +49,7 @@ public class HomeFragment extends Fragment {
         cesiumWebView = view.findViewById(R.id.cesium_webview);
         setupCesiumWebView();
 
-        // Load user trips
-        loadUserTrips();
+        // Don't call loadUserTrips() here - it will be handled by the auth state listener
 
         return view;
     }
@@ -98,10 +96,59 @@ public class HomeFragment extends Fragment {
         cesiumWebView.loadUrl("file:///android_asset/globe/webmap.html");
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Register for auth state changes
+        AuthStateManager.getInstance().addListener(this);
+
+        if (animationBackground != null && !animationBackground.isAnimating()) {
+            animationBackground.resumeAnimation();
+        }
+        cesiumWebView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Unregister to prevent memory leaks
+        AuthStateManager.getInstance().removeListener(this);
+
+        if (animationBackground != null && animationBackground.isAnimating()) {
+            animationBackground.pauseAnimation();
+        }
+        cesiumWebView.onPause();
+    }
+
+    @Override
+    public void onAuthStateChanged(boolean isAuthenticated) {
+        if (getActivity() == null) return;
+
+        getActivity().runOnUiThread(() -> {
+            if (isAuthenticated) {
+                // User is authenticated, load trips
+                loadUserTrips();
+            } else {
+                // User logged out, clear the globe
+                userTrips = null;
+                if (cesiumWebView != null) {
+                    // Call JavaScript function to clear all pins
+                    cesiumWebView.evaluateJavascript("clearAllPins();", null);
+                }
+            }
+        });
+    }
+
     /**
      * Load the user's trips from Supabase
      */
     private void loadUserTrips() {
+        // Check authentication state first
+        if (!AuthStateManager.getInstance().isAuthenticated()) {
+            // Not authenticated, don't try to load trips
+            return;
+        }
+
         supabaseTrip.getUserTrips(new SupabaseTrip.TripDataCallback() {
             @Override
             public void onSuccess(List<Trip> trips) {
@@ -167,27 +214,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (animationBackground != null && !animationBackground.isAnimating()) {
-            animationBackground.resumeAnimation();
-        }
-        cesiumWebView.onResume();
-
-        // Reload trips when fragment resumes (to get any new trips)
-        loadUserTrips();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (animationBackground != null && animationBackground.isAnimating()) {
-            animationBackground.pauseAnimation();
-        }
-        cesiumWebView.onPause();
-    }
-
     /**
      * JavaScript interface to handle communication between WebView and Java
      */
@@ -229,28 +255,9 @@ public class HomeFragment extends Fragment {
                     }
 
                     if (selectedTrip != null) {
-                        // Launch TripDetailActivity with the selected trip details
+                        // Launch ViewTripActivity with the selected trip
                         Intent intent = new Intent(getActivity(), TripDetailActivity.class);
-
-                        // Pass all necessary trip details to the detail activity
-                        intent.putExtra("trip_id", selectedTrip.getTripId());
-                        intent.putExtra("trip_name", selectedTrip.getTripName());
-                        intent.putExtra("country", selectedTrip.getCountry());
-                        intent.putExtra("journal", selectedTrip.getJournal());
-
-                        // Format dates for the intent
-                        SimpleDateFormat sqlDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                        if (selectedTrip.getStartDate() != null) {
-                            intent.putExtra("start_date", sqlDateFormat.format(selectedTrip.getStartDate()));
-                        }
-                        if (selectedTrip.getEndDate() != null) {
-                            intent.putExtra("end_date", sqlDateFormat.format(selectedTrip.getEndDate()));
-                        }
-
-                        // Convert image URLs list to ArrayList for the intent
-                        ArrayList<String> imageUrlsList = new ArrayList<>(selectedTrip.getImageUrls());
-                        intent.putStringArrayListExtra("image_urls", imageUrlsList);
-
+                        intent.putExtra("trip_id", tripId);
                         startActivity(intent);
                     } else {
                         System.out.println("Trip not found with ID: " + tripId);
