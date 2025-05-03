@@ -382,6 +382,24 @@
     map.on('mouseup', () => rotating = false);
     map.on('touchend', () => rotating = false);
     setInterval(rotateMap, 50);
+
+    function clearAllPins() {
+    // Clear the userTrips array
+    userTrips = [];
+
+    // Remove any active popup
+    if (activePopup) {
+        activePopup.remove();
+    }
+
+    // Remove all markers from the map
+    const markers = document.querySelectorAll('.trip-pin');
+    markers.forEach(marker => {
+        marker.parentNode.remove();
+    });
+
+    console.log('All pins cleared from globe');
+}
 </script>
 </body>
 </html>

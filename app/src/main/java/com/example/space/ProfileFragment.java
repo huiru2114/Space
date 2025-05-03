@@ -105,7 +105,6 @@ public class ProfileFragment extends Fragment {
                 startActivityForResult(intent, LOGIN_REQUEST_CODE);
             }
         });
-
         return view;
     }
 

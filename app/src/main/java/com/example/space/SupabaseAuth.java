@@ -39,19 +39,26 @@ public class SupabaseAuth {
     private SharedPreferences signupPrefs;
     private ExecutorService executor;
 
+    public boolean isAuthenticated() {
+        String accessToken = getAccessToken();
+        return accessToken != null && !accessToken.isEmpty();
+    }
+
     // Constructor
     public SupabaseAuth(Context context) {
         this.authPrefs = context.getSharedPreferences("AuthPrefs", Context.MODE_PRIVATE);
         this.signupPrefs = context.getSharedPreferences("SignupPrefs", Context.MODE_PRIVATE);
         this.executor = Executors.newSingleThreadExecutor();
 
-        // Fetch Supabase URL and API key from resources
         this.SUPABASE_URL = context.getResources().getString(R.string.SUPABASE_URL);
         this.API_KEY = context.getResources().getString(R.string.SUPABASE_KEY);
-
         this.AUTH_URL = SUPABASE_URL + "/auth/v1";
         this.REST_URL = SUPABASE_URL + "/rest/v1";
         this.STORAGE_URL = SUPABASE_URL + "/storage/v1";
+
+        // Initialize auth state
+        boolean isAuthenticated = isAuthenticated();
+        AuthStateManager.getInstance().setAuthenticated(isAuthenticated);
     }
 
     /**
@@ -259,6 +266,10 @@ public class SupabaseAuth {
                         editor.apply();
 
                         Log.d(TAG, "User data stored successfully");
+
+                        // Update authentication state - this will notify all listeners
+                        AuthStateManager.getInstance().setAuthenticated(true);
+
                         callback.onSuccess("Login successful");
                     } else {
                         Log.e(TAG, "Invalid login response - No access token");
@@ -335,6 +346,9 @@ public class SupabaseAuth {
                     .remove("user_id")
                     .apply();
         }
+
+        // Update auth state - this will notify all listeners
+        AuthStateManager.getInstance().setAuthenticated(false);
     }
 
     /**

@@ -6,10 +6,13 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
+import android.widget.Toast;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
@@ -25,6 +28,9 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     private ExploreFragment exploreFragment;
     private ProfileFragment profileFragment;
 
+    // Add SupabaseAuth instance
+    private SupabaseAuth supabaseAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +43,13 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         );
 
         setContentView(R.layout.activity_main);
+
+        // Initialize SupabaseAuth
+        SupabaseAuth supabaseAuth = new SupabaseAuth(this);
+
+        // Initialize auth state based on current token
+        boolean isAuthenticated = supabaseAuth.isAuthenticated();
+        AuthStateManager.getInstance().setAuthenticated(isAuthenticated);
 
         // Initialize Bottom Navigation
         bottomNavigationView = findViewById(R.id.bottom_navigation);
@@ -115,5 +128,21 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
             return true;
         }
         return false;
+    }
+
+    /**
+     * Handle user logout
+     * Call this method from your logout button or menu item in ProfileFragment
+     */
+    public void handleLogout() {
+        // This will clear auth tokens and notify all AuthStateListeners
+        supabaseAuth.signOut();
+
+        // Navigate to the login screen
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+
+        // Show a toast message
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
 }
